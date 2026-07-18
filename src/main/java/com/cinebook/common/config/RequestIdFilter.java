@@ -1,0 +1,47 @@
+package com.cinebook.common.config;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.MDC;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+import java.util.UUID;
+
+@Component
+@Order(Ordered.HIGHEST_PRECEDENCE)
+public class RequestIdFilter extends OncePerRequestFilter {
+
+    private static final String TRACE_ID_HEADER = "X-Trace-Id";
+    private static final String MDC_TRACE_ID_KEY = "traceId";
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
+
+        // Get traceId from Header (if not generate new traceId)
+        String traceId = request.getHeader(TRACE_ID_HEADER);
+
+        if (traceId == null || traceId.isBlank()) {
+            traceId = UUID.randomUUID().toString();
+        }
+
+        // Put into MDC for Logback to take out
+        MDC.put(MDC_TRACE_ID_KEY, traceId);
+
+        // Response Header for Client
+        response.setHeader("X-Trace-Id", traceId);
+        try {
+            // Allow request go into Controller
+            filterChain.doFilter(request, response);
+        } finally {
+            MDC.remove(MDC_TRACE_ID_KEY);
+        }
+    }
+}
