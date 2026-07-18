@@ -6,3 +6,13 @@ spring:
   logging:
     pattern:
       console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - [%X{traceId}] - %msg%n"
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method # Sort API by: GET, POST, PUT, DELETE
+    tagsSorter: alpha        # Sort Controller by alphabet
+
+  packages-to-scan: com.cinebook
