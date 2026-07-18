@@ -16,3 +16,13 @@ springdoc:
     tagsSorter: alpha        # Sort Controller by alphabet
 
   packages-to-scan: com.cinebook
+
+app:
+  redis:
+    verify-token-ttl-minutes: 5
+
+rabbitmq:
+  exchange: jobs.exchange
+  mail:
+    routing-key: jobs.mail
+    queue: jobs.queue-mail
