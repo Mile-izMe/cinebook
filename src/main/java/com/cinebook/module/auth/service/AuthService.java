@@ -2,19 +2,27 @@ package com.cinebook.module.auth.service;
 
 import com.cinebook.common.exception.CinebookException;
 import com.cinebook.common.exception.ErrorCode;
+import com.cinebook.common.security.JwtProvider;
+import com.cinebook.module.auth.dto.request.LoginRequest;
 import com.cinebook.module.auth.dto.request.RegisterRequest;
+import com.cinebook.module.auth.dto.response.AuthResponse;
 import com.cinebook.module.auth.dto.response.RegisterResponse;
+import com.cinebook.module.auth.entity.RefreshToken;
 import com.cinebook.module.auth.event.UserRegisteredEvent;
 import com.cinebook.module.auth.messaging.MailEventPublisher;
+import com.cinebook.module.auth.repository.RefreshTokenRepository;
 import com.cinebook.module.user.entity.Role;
 import com.cinebook.module.user.entity.User;
 import com.cinebook.module.user.repository.RoleRepository;
 import com.cinebook.module.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 @Service
@@ -26,6 +34,12 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final VerifyTokenService verifyTokenService;
     private final MailEventPublisher mailEventPublisher;
+    private final JwtProvider jwtProvider;
+    private final TokenHasher tokenHasher;
+    private final RefreshTokenRepository refreshTokenRepository;
+
+    @Value("${app.jwt.refresh-token-ttl-days}")
+    private long refreshTokenTtlDays;
 
     // ---------------------------------------------------------------
     // Register
@@ -73,12 +87,55 @@ public class AuthService {
     @Transactional
     public void verifyEmail(String token) {
         UUID userId = verifyTokenService.consumeToken(token) // GETDEL: single-use
-                .orElseThrow(() -> new CinebookException(ErrorCode.INVALID_VERIY_TOKEN));
+                .orElseThrow(() -> new CinebookException(ErrorCode.INVALID_VERIFY_TOKEN));
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CinebookException(ErrorCode.USER_NOT_FOUND));
 
         user.setVerified(true);
         userRepository.save(user);
+    }
+
+    // ---------------------------------------------------------------
+    // Login
+    // ---------------------------------------------------------------
+    @Transactional
+    public AuthResponse login(LoginRequest request) {
+        User user = userRepository.findByEmailAndDeletedAtIsNull(request.email())
+                .orElseThrow(() -> new CinebookException(ErrorCode.INVALID_CREDENTIALS));
+
+        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+            throw new CinebookException(ErrorCode.INVALID_CREDENTIALS);
+        }
+
+        if (!user.isVerified()) {
+            throw new CinebookException(ErrorCode.EMAIL_NOT_VERIFIED);
+        }
+
+        String accessToken = jwtProvider.generateAccessToken(user.getId(), user.getEmail(), user.getRole().getRoleCode());
+        String rawRefreshToken = issueRefreshToken(user, request.deviceId());
+
+        return new AuthResponse(accessToken, rawRefreshToken, user.getId(), user.getAvatarUrl());
+    }
+
+    // ---------------------------------------------------------------
+    // Shared helper
+    // ---------------------------------------------------------------
+    private String issueRefreshToken(User user, String deviceId) {
+        String rawToken = UUID.randomUUID().toString();
+        String hash = tokenHasher.hash(rawToken);
+        Instant expiresAt = Instant.now().plus(refreshTokenTtlDays, ChronoUnit.DAYS);
+
+        // One active refresh token per (user, device): replace if one exists
+        // for this device instead of accumulating rows forever
+        RefreshToken token = refreshTokenRepository.findByUserIdAndDeviceId(user.getId(), deviceId)
+                .orElseGet(() -> RefreshToken.builder().user(user).deviceId(deviceId).build());
+
+        token.setTokenHash(hash);
+        token.setExpiresAt(expiresAt);
+        token.setRevokedAt(null);
+
+        refreshTokenRepository.save(token);
+        return rawToken;
     }
 }

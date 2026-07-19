@@ -15,7 +15,11 @@ public enum ErrorCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USR-001", "Không tìm thấy người dùng"),
     EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "USR-002", "Email đã tồn tại trong hệ thống"),
     PHONE_ALREADY_EXISTS(HttpStatus.CONFLICT, "USR-003", "Phone is already existed in system"),
-    INVALID_VERIY_TOKEN(HttpStatus.BAD_REQUEST, "USR-004", "Token is invalid");
+    INVALID_VERIFY_TOKEN(HttpStatus.BAD_REQUEST, "USR-004", "Token is invalid"),
+    INVALID_CREDENTIALS(HttpStatus.BAD_REQUEST, "USR-005", "Email or password is incorrect"),
+    EMAIL_NOT_VERIFIED(HttpStatus.BAD_REQUEST, "USR-006", "Email not verified yet"),
+    INVALID_ACCESS_TOKEN(HttpStatus.BAD_REQUEST, "USR-007", "Invalid access token"),
+    ACCESS_DENIED(HttpStatus.BAD_REQUEST, "USR-008", "You do not have permission to this function");
 
     private final HttpStatus status;
     private final String code;

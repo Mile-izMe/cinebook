@@ -1,8 +1,11 @@
 package com.cinebook.module.auth.controller;
 
+import com.cinebook.module.auth.dto.request.LoginRequest;
 import com.cinebook.module.auth.dto.request.RegisterRequest;
+import com.cinebook.module.auth.dto.response.AuthResponse;
 import com.cinebook.module.auth.dto.response.RegisterResponse;
 import com.cinebook.module.auth.service.AuthService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -12,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Tag(name = "Authentication", description = "Handle Authentication APIs")
 public class AuthController {
 
     private final AuthService authService;
@@ -25,5 +29,10 @@ public class AuthController {
     public ResponseEntity<Void> verifyEmail(@RequestParam String token) {
         authService.verifyEmail(token);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+        return ResponseEntity.ok(authService.login(request));
     }
 }

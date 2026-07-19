@@ -1,4 +1,11 @@
 package com.cinebook.module.auth.dto.response;
 
-public class AuthResponse {
+import java.util.UUID;
+
+public record AuthResponse(
+        String accessToken,
+        String refreshToken,
+        UUID id,
+        String avatarUrl
+) {
 }
