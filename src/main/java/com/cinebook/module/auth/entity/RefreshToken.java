@@ -4,6 +4,10 @@ import com.cinebook.common.entity.Auditable;
 import com.cinebook.module.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -12,7 +16,7 @@ import java.util.UUID;
 @Table(name = "refresh_token", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "device_id"}))
 @Getter @Setter @Builder
 @NoArgsConstructor @AllArgsConstructor
-public class RefreshToken extends Auditable {
+public class RefreshToken {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -34,6 +38,22 @@ public class RefreshToken extends Auditable {
 
     @Column(name = "revoked_at")
     private Instant revokedAt;
+
+    @CreatedDate
+    @Column(name = "created_at", updatable = false, nullable = false)
+    private Instant createdAt;
+
+    @CreatedBy
+    @Column(name = "created_by", updatable = false)
+    private UUID createdBy;
+
+    @LastModifiedDate
+    @Column(name = "updated_at")
+    private Instant updatedAt;
+
+    @LastModifiedBy
+    @Column(name = "updated_by")
+    private UUID updatedBy;
 
     public boolean isActive() {
         return revokedAt == null && expiresAt.isAfter(Instant.now());

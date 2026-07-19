@@ -15,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -59,9 +61,24 @@ public class AuthService {
         // Publish AFTER the user row is committed logically; enqueue only,
         // never send the email synchronously in this request.
         mailEventPublisher.publishUserRegistered(
-                new UserRegisteredEvent(user.getId(), user.getEmail(), user.getUserName(), verifyToken));
-
+                new UserRegisteredEvent(user.getId(), user.getEmail(), user.getUserName(), verifyToken)
+        );
 
         return new RegisterResponse(user.getId(), user.getEmail(), user.isVerified());
+    }
+
+    // ---------------------------------------------------------------
+    // Verify Email
+    // ---------------------------------------------------------------
+    @Transactional
+    public void verifyEmail(String token) {
+        UUID userId = verifyTokenService.consumeToken(token) // GETDEL: single-use
+                .orElseThrow(() -> new CinebookException(ErrorCode.INVALID_VERIY_TOKEN));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CinebookException(ErrorCode.USER_NOT_FOUND));
+
+        user.setVerified(true);
+        userRepository.save(user);
     }
 }

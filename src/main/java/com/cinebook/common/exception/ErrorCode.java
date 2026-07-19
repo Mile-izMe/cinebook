@@ -14,7 +14,8 @@ public enum ErrorCode {
     // --- Business Error ---
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USR-001", "Không tìm thấy người dùng"),
     EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "USR-002", "Email đã tồn tại trong hệ thống"),
-    PHONE_ALREADY_EXISTS(HttpStatus.CONFLICT, "USR-003", "Phone is already existed in system");
+    PHONE_ALREADY_EXISTS(HttpStatus.CONFLICT, "USR-003", "Phone is already existed in system"),
+    INVALID_VERIY_TOKEN(HttpStatus.BAD_REQUEST, "USR-004", "Token is invalid");
 
     private final HttpStatus status;
     private final String code;

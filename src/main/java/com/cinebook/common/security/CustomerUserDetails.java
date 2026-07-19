@@ -20,7 +20,7 @@ public class CustomerUserDetails implements UserDetails {
     private final String roleCode;
     private final boolean verified;
 
-    public CustomUserDetails(User user) {
+    public CustomerUserDetails(User user) {
         this.userId = user.getId();
         this.email = user.getEmail();
         this.password = user.getPassword();

@@ -1,6 +1,32 @@
 spring:
   profiles:
     active: dev
+
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USER}
+    password: ${MAIL_PASS}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls.enable: true
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: cinebook
+    password: Mile123_A
+    listener:
+      simple:
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 3s
+          multiplier: 2
+          max-interval: 15s
+
   application:
     name: cinebook-api
   logging:
@@ -21,8 +47,19 @@ app:
   redis:
     verify-token-ttl-minutes: 5
 
-rabbitmq:
-  exchange: jobs.exchange
   mail:
-    routing-key: jobs.mail
-    queue: jobs.queue-mail
+    from: ${MAIL_USER}
+    verify-base-url:
+
+
+rabbitmq:
+  exchange: cinebook.exchange
+  mail:
+    queue: cinebook.auth.mail.queue
+    routing-key: auth.user.registered
+
+  dlx: cinebook.dlx
+  dlq:
+    mail:
+      queue: cinebook.auth.mail.dlq
+      routing-key: auth.mail.dlq.key

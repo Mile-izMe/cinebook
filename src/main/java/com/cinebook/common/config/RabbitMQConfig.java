@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
+    // --- Main network ---
     @Value("${rabbitmq.exchange}")
     private String exchangeName;
 
@@ -21,6 +22,39 @@ public class RabbitMQConfig {
     @Value("${rabbitmq.mail.routing-key}")
     private String mailRoutingKey;
 
+    // --- Variable for Dead Letter Queue (DLQ) ---
+    @Value("${rabbitmq.dlx}")
+    private String dlxName;
+
+    @Value("${rabbitmq.dlq.mail.queue}")
+    private String mailDlqName;
+
+    @Value("${rabbitmq.dlq.mail.routing-key}")
+    private String mailDlqRoutingKey;
+
+    // ==========================================
+    // 1. CONFIG DEAD LETTER (DLX & DLQ)
+    // ==========================================
+    @Bean
+    public DirectExchange deadLetterExchange() {
+        return new DirectExchange(dlxName, true, false);
+    }
+
+    @Bean
+    public Queue deadLetterMailQueue() {
+        return new Queue(mailDlqName, true);
+    }
+
+    @Bean
+    public Binding deadLetterMailBinding() {
+        return BindingBuilder.bind(deadLetterMailQueue())
+                .to(deadLetterExchange())
+                .with(mailDlqRoutingKey);
+    }
+
+    // ==========================================
+    // 2. CONFIG MAIN NETWORK
+    // ==========================================
     @Bean
     public DirectExchange cinebookExchange() {
         return new DirectExchange(exchangeName, true, false);
@@ -29,7 +63,10 @@ public class RabbitMQConfig {
     @Bean
     public Queue mailQueue() {
         // durable queue so messages survive a broker restart
-        return new Queue(mailQueueName, true);
+        return QueueBuilder.durable(mailQueueName)
+                .withArgument("x-dead-letter-exchange", dlxName)
+                .withArgument("x-dead-letter-routing-key", mailDlqRoutingKey)
+                .build();
     }
 
     @Bean
@@ -37,6 +74,9 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(mailQueue).to(cinebookExchange).with(mailRoutingKey);
     }
 
+    // ==========================================
+    // 3. CONFIG CONVERTER & LISTENER
+    // ==========================================
     @Bean
     public MessageConverter jsonMessageConverter() {
         return new JacksonJsonMessageConverter();
