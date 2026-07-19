@@ -4,6 +4,8 @@ import com.cinebook.common.exception.CinebookException;
 import com.cinebook.common.exception.ErrorCode;
 import com.cinebook.common.security.JwtProvider;
 import com.cinebook.module.auth.dto.request.LoginRequest;
+import com.cinebook.module.auth.dto.request.LogoutRequest;
+import com.cinebook.module.auth.dto.request.RefreshRequest;
 import com.cinebook.module.auth.dto.request.RegisterRequest;
 import com.cinebook.module.auth.dto.response.AuthResponse;
 import com.cinebook.module.auth.dto.response.RegisterResponse;
@@ -116,6 +118,53 @@ public class AuthService {
         String rawRefreshToken = issueRefreshToken(user, request.deviceId());
 
         return new AuthResponse(accessToken, rawRefreshToken, user.getId(), user.getAvatarUrl());
+    }
+
+    // ---------------------------------------------------------------
+    // Refresh Token Rotation
+    // ---------------------------------------------------------------
+    @Transactional
+    public AuthResponse refresh(RefreshRequest request) {
+        String hash = tokenHasher.hash(request.refreshToken());
+
+        RefreshToken existing = refreshTokenRepository.findByTokenHash(hash)
+                .orElseThrow(() -> new CinebookException(ErrorCode.INVALID_REFRESH_TOKEN));
+
+        if (!existing.getDeviceId().equals(request.deviceId())) {
+            // token replayed from a different device than it was issued to
+            throw new CinebookException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        if (existing.getRevokedAt() != null) {
+            throw new CinebookException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        if (existing.getExpiresAt().isBefore(Instant.now())) {
+            throw new CinebookException(ErrorCode.REFRESH_TOKEN_EXPIRED);
+        }
+
+        User user = existing.getUser();
+
+        // Invalidate the old token immediately - rotation, not reuse
+        existing.setRevokedAt(Instant.now());
+        refreshTokenRepository.save(existing);
+        refreshTokenRepository.delete(existing);
+
+        String accessToken = jwtProvider.generateAccessToken(user.getId(), user.getEmail(), user.getRole().getRoleCode());
+        String newRawRefreshToken = issueRefreshToken(user, request.deviceId());
+
+        return new AuthResponse(accessToken, newRawRefreshToken, user.getId(), user.getAvatarUrl());
+    }
+
+    // ---------------------------------------------------------------
+    // Logout
+    // ---------------------------------------------------------------
+    @Transactional
+    public void logout(UUID userId, LogoutRequest request) {
+        refreshTokenRepository.findByUserIdAndDeviceId(userId, request.deviceId())
+                .ifPresent(refreshTokenRepository::delete);
+        // No access-token blacklist: access token TTL is short (15 min), so
+        // it naturally expires soon after logout - see Milestone 2.7 note.
     }
 
     // ---------------------------------------------------------------
