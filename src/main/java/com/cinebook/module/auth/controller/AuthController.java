@@ -48,8 +48,11 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiSuccessResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
-        AuthResponse auth = authService.login(request);
+    public ResponseEntity<ApiSuccessResponse<AuthResponse>> login(
+            @Valid @RequestBody LoginRequest request,
+            @RequestHeader(value = "X-Device-ID", required = false) String deviceId
+    ) {
+        AuthResponse auth = authService.login(request, deviceId);
 
         ApiSuccessResponse<AuthResponse> response = ApiSuccessResponse.<AuthResponse>builder()
                 .message("Login successful")
@@ -60,8 +63,11 @@ public class AuthController {
     }
 
     @PostMapping("/refresh-token")
-    public ResponseEntity<ApiSuccessResponse<AuthResponse>> refresh(@Valid @RequestBody RefreshRequest request) {
-        AuthResponse auth = authService.refresh(request);
+    public ResponseEntity<ApiSuccessResponse<AuthResponse>> refresh(
+            @Valid @RequestBody RefreshRequest request,
+            @RequestHeader(value = "X-Device-ID", required = false) String deviceId
+    ) {
+        AuthResponse auth = authService.refresh(request, deviceId);
 
         ApiSuccessResponse<AuthResponse> response = ApiSuccessResponse.<AuthResponse>builder()
                 .message("Refresh Token successful")
@@ -86,10 +92,10 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@Valid @RequestBody LogoutRequest request,
+    public ResponseEntity<Void> logout(@RequestHeader(value = "X-Device-ID", required = false) String deviceId,
                                        Authentication authentication) {
         UUID userId = UUID.fromString(authentication.getName());
-        authService.logout(userId, request);
+        authService.logout(userId, deviceId);
         return ResponseEntity.noContent().build();
     }
 }

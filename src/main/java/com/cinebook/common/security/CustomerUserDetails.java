@@ -20,12 +20,22 @@ public class CustomerUserDetails implements UserDetails {
     private final String roleCode;
     private final boolean verified;
 
+    // CONSTRUCTOR 1: Use when query Database (Login)
     public CustomerUserDetails(User user) {
         this.userId = user.getId();
         this.email = user.getEmail();
         this.password = user.getPassword();
         this.roleCode = user.getRole().getRoleCode();
         this.verified = user.isVerified();
+    }
+
+    // CONSTRUCTOR 2: Use when construct manually (In Filter)
+    public CustomerUserDetails(UUID userId, String email, String password, String roleCode, boolean verified) {
+        this.userId = userId;
+        this.email = email;
+        this.password = password;
+        this.roleCode = roleCode;
+        this.verified = verified;
     }
 
     @Override
@@ -48,9 +58,17 @@ public class CustomerUserDetails implements UserDetails {
     }
 
     @Override
-    public boolean isAccountNonExpired() { return true; }
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
     @Override
-    public boolean isAccountNonLocked() { return true; }
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
     @Override
-    public boolean isCredentialsNonExpired() { return true; }
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
 }

@@ -9,9 +9,6 @@ public record LoginRequest(
         String email,
 
         @NotBlank(message = "Password must not be empty")
-        String password,
-
-        @NotBlank
-        String deviceId
+        String password
 ) {
 }

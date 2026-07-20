@@ -26,7 +26,7 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = ex.getErrorCode();
 
         // Log warning (normally business error only need to log INFO or WARN)
-        log.warn("Business Exception: {} - {}", errorCode.getCode(), ex.getMessage());
+        log.warn("[TraceID: {}] Business Exception: {} - {}", getTraceId(), errorCode.getCode(), ex.getMessage());
 
         ApiErrorResponse response = ApiErrorResponse.builder()
                 .timestamp(Instant.now())
@@ -49,7 +49,7 @@ public class GlobalExceptionHandler {
         ErrorCode defaultError = ErrorCode.INTERNAL_SERVER_ERROR;
 
         // Log ERROR attach stacktrace to debug
-        log.error("Internal Server Error: ", ex);
+        log.error("[TraceID: {}] Internal Server Error: ", getTraceId(), ex);
 
         ApiErrorResponse response = ApiErrorResponse.builder()
                 .timestamp(Instant.now())
@@ -76,6 +76,9 @@ public class GlobalExceptionHandler {
                 .map(fe -> new FieldErrorDetail(fe.getField(), fe.getDefaultMessage()))
                 .toList();
 
+        log.warn("[TraceID: {}] Validation Error at path {}: {} errors found",
+                getTraceId(), request.getRequestURI(), details.size());
+
         ApiErrorResponse response = ApiErrorResponse.builder()
                 .timestamp(Instant.now())
                 .status(ErrorCode.VALIDATION_ERROR.getStatus().value())
@@ -96,7 +99,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiErrorResponse> handleDataIntegrity(
             DataIntegrityViolationException ex, HttpServletRequest request) {
-        log.warn("Data integrity violation: {}", ex.getMessage());
+
+        log.warn("[TraceID: {}] Data integrity violation: {}", getTraceId(), ex.getMessage());
 
         ApiErrorResponse response = ApiErrorResponse.builder()
                 .timestamp(Instant.now())

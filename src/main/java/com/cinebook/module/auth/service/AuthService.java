@@ -103,7 +103,7 @@ public class AuthService {
     // Login
     // ---------------------------------------------------------------
     @Transactional
-    public AuthResponse login(LoginRequest request) {
+    public AuthResponse login(LoginRequest request, String deviceId) {
         User user = userRepository.findByEmailAndDeletedAtIsNull(request.email())
                 .orElseThrow(() -> new CinebookException(ErrorCode.INVALID_CREDENTIALS));
 
@@ -116,7 +116,7 @@ public class AuthService {
         }
 
         String accessToken = jwtProvider.generateAccessToken(user.getId(), user.getEmail(), user.getRole().getRoleCode());
-        String rawRefreshToken = issueRefreshToken(user, request.deviceId());
+        String rawRefreshToken = issueRefreshToken(user, deviceId);
 
         return new AuthResponse(accessToken, rawRefreshToken, user.getId(), user.getAvatarUrl());
     }
@@ -125,13 +125,13 @@ public class AuthService {
     // Refresh Token Rotation
     // ---------------------------------------------------------------
     @Transactional
-    public AuthResponse refresh(RefreshRequest request) {
+    public AuthResponse refresh(RefreshRequest request, String deviceId) {
         String hash = tokenHasher.hash(request.refreshToken());
 
         RefreshToken existing = refreshTokenRepository.findByTokenHash(hash)
                 .orElseThrow(() -> new CinebookException(ErrorCode.INVALID_REFRESH_TOKEN));
 
-        if (!existing.getDeviceId().equals(request.deviceId())) {
+        if (!existing.getDeviceId().equals(deviceId)) {
             // token replayed from a different device than it was issued to
             throw new CinebookException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
@@ -152,7 +152,7 @@ public class AuthService {
         refreshTokenRepository.delete(existing);
 
         String accessToken = jwtProvider.generateAccessToken(user.getId(), user.getEmail(), user.getRole().getRoleCode());
-        String newRawRefreshToken = issueRefreshToken(user, request.deviceId());
+        String newRawRefreshToken = issueRefreshToken(user, deviceId);
 
         return new AuthResponse(accessToken, newRawRefreshToken, user.getId(), user.getAvatarUrl());
     }
@@ -161,8 +161,8 @@ public class AuthService {
     // Logout
     // ---------------------------------------------------------------
     @Transactional
-    public void logout(UUID userId, LogoutRequest request) {
-        refreshTokenRepository.findByUserIdAndDeviceId(userId, request.deviceId())
+    public void logout(UUID userId, String deviceId) {
+        refreshTokenRepository.findByUserIdAndDeviceId(userId, deviceId)
                 .ifPresent(refreshTokenRepository::delete);
         // No access-token blacklist: access token TTL is short (15 min), so
         // it naturally expires soon after logout - see Milestone 2.7 note.

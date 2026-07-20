@@ -6,6 +6,7 @@ import com.cinebook.common.exception.ErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
@@ -20,6 +21,7 @@ import java.time.Instant;
  * (missing/invalid/expired access token) -> 401 with the standard error body.
  */
 @Component
+@Slf4j
 public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
@@ -28,6 +30,10 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     public void commence(HttpServletRequest request, HttpServletResponse response,
                          AuthenticationException authException) throws IOException {
         ErrorCode ec = ErrorCode.INVALID_ACCESS_TOKEN;
+
+        String traceId = MDC.get("traceId");
+        log.error("[TraceID: {}] API Error: {} - Detail: {}",
+                traceId, request.getRequestURI(), authException.getMessage(), authException);
 
         ApiErrorResponse body = ApiErrorResponse.builder()
                 .timestamp(Instant.now())
