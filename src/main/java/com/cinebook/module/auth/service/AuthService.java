@@ -9,6 +9,7 @@ import com.cinebook.module.auth.dto.request.RefreshRequest;
 import com.cinebook.module.auth.dto.request.RegisterRequest;
 import com.cinebook.module.auth.dto.response.AuthResponse;
 import com.cinebook.module.auth.dto.response.RegisterResponse;
+import com.cinebook.module.auth.dto.response.UserResponse;
 import com.cinebook.module.auth.entity.RefreshToken;
 import com.cinebook.module.auth.event.UserRegisteredEvent;
 import com.cinebook.module.auth.messaging.MailEventPublisher;
@@ -165,6 +166,25 @@ public class AuthService {
                 .ifPresent(refreshTokenRepository::delete);
         // No access-token blacklist: access token TTL is short (15 min), so
         // it naturally expires soon after logout - see Milestone 2.7 note.
+    }
+
+    // ---------------------------------------------------------------
+    // Get User Profile
+    // ---------------------------------------------------------------
+    @Transactional
+    public UserResponse getUserProfile(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CinebookException(ErrorCode.USER_NOT_FOUND));
+
+        return UserResponse.builder()
+                .id(user.getId())
+                .roleId(user.getRole().getId())
+                .email(user.getEmail())
+                .userName(user.getUserName())
+                .phone(user.getPhone())
+                .roleCode(user.getRole().getRoleCode())
+                .avatarUrl(user.getAvatarUrl())
+                .build();
     }
 
     // ---------------------------------------------------------------

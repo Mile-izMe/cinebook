@@ -1,6 +1,5 @@
 package com.cinebook.module.auth.entity;
 
-import com.cinebook.common.entity.Auditable;
 import com.cinebook.module.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -8,14 +7,19 @@ import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
 import java.util.UUID;
 
 @Entity
 @Table(name = "refresh_token", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "device_id"}))
-@Getter @Setter @Builder
-@NoArgsConstructor @AllArgsConstructor
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 public class RefreshToken {
 
     @Id
@@ -29,7 +33,9 @@ public class RefreshToken {
     @Column(name = "device_id", nullable = false)
     private String deviceId;
 
-    /** SHA-256 hash of the raw refresh token. Never store the raw token. */
+    /**
+     * SHA-256 hash of the raw refresh token. Never store the raw token.
+     */
     @Column(name = "token_hash", nullable = false)
     private String tokenHash;
 
