@@ -53,7 +53,7 @@ app:
 
   mail:
     from: ${MAIL_USER}
-    verify-base-url:
+    verify-base-url: http://localhost:3000/verify-email
 
   jwt:
     access-secret: ${JWT_ACCESS_SECRET}   # min 32 chars
