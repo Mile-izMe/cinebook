@@ -10,6 +10,6 @@ import lombok.Getter;
 public class CursorPaginationMeta {
 
     private String nextCursor;
-
-    private boolean hasNextPage;
+    private boolean hasMore;
+    private int limit;
 }

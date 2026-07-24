@@ -93,9 +93,8 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@RequestHeader(value = "X-Device-ID", required = false) String deviceId,
-                                       Authentication authentication) {
-        UUID userId = UUID.fromString(authentication.getName());
-        authService.logout(userId, deviceId);
+                                       @AuthenticationPrincipal CustomerUserDetails userDetails) {
+        authService.logout(userDetails.getUserId(), deviceId);
         return ResponseEntity.noContent().build();
     }
 }
