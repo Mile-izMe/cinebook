@@ -65,9 +65,15 @@ rabbitmq:
   mail:
     queue: cinebook.auth.mail.queue
     routing-key: auth.user.registered
+  review:
+    queue: cinebook.review.queue
+    routing-key: review.interacted
 
   dlx: cinebook.dlx
   dlq:
     mail:
       queue: cinebook.auth.mail.dlq
       routing-key: auth.mail.dlq.key
+    review:
+      queue: cinebook.review.dlq
+      routing-key: review.dlq.key

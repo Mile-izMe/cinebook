@@ -22,6 +22,12 @@ public class RabbitMQConfig {
     @Value("${rabbitmq.mail.routing-key}")
     private String mailRoutingKey;
 
+    @Value("${rabbitmq.review.queue}")
+    private String reviewQueueName;
+
+    @Value("${rabbitmq.review.routing-key}")
+    private String reviewRoutingKey;
+
     // --- Variable for Dead Letter Queue (DLQ) ---
     @Value("${rabbitmq.dlx}")
     private String dlxName;
@@ -31,6 +37,12 @@ public class RabbitMQConfig {
 
     @Value("${rabbitmq.dlq.mail.routing-key}")
     private String mailDlqRoutingKey;
+
+    @Value("${rabbitmq.dlq.review.queue}")
+    private String reviewDlqName;
+
+    @Value("${rabbitmq.dlq.review.routing-key}")
+    private String reviewDlqRoutingKey;
 
     // ==========================================
     // 1. CONFIG DEAD LETTER (DLX & DLQ)
@@ -50,6 +62,18 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(deadLetterMailQueue())
                 .to(deadLetterExchange())
                 .with(mailDlqRoutingKey);
+    }
+
+    @Bean
+    public Queue deadLetterReviewQueue() {
+        return new Queue(reviewDlqName, true);
+    }
+
+    @Bean
+    public Binding deadLetterReviewBinding() {
+        return BindingBuilder.bind(deadLetterReviewQueue())
+                .to(deadLetterExchange())
+                .with(reviewDlqRoutingKey);
     }
 
     // ==========================================
@@ -72,6 +96,19 @@ public class RabbitMQConfig {
     @Bean
     public Binding mailBinding(Queue mailQueue, DirectExchange cinebookExchange) {
         return BindingBuilder.bind(mailQueue).to(cinebookExchange).with(mailRoutingKey);
+    }
+
+    @Bean
+    public Queue reviewQueue() {
+        return QueueBuilder.durable(reviewQueueName)
+                .withArgument("x-dead-letter-exchange", dlxName)
+                .withArgument("x-dead-letter-routing-key", reviewDlqRoutingKey)
+                .build();
+    }
+
+    @Bean
+    public Binding reviewBinding(Queue reviewQueue, DirectExchange cinebookExchange) {
+        return BindingBuilder.bind(reviewQueue).to(cinebookExchange).with(reviewRoutingKey);
     }
 
     // ==========================================

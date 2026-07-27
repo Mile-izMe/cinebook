@@ -19,6 +19,7 @@ import com.cinebook.module.movie.repository.MovieRepository;
 import com.cinebook.module.review.dto.response.ReviewResponse;
 import com.cinebook.module.review.entity.Review;
 import com.cinebook.module.review.repository.ReviewRepository;
+import com.cinebook.module.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -179,18 +180,27 @@ public class MovieService {
     }
 
     private MovieSummaryResponse toSummary(Movie movie, List<Genre> genres) {
-        return new MovieSummaryResponse(
-                movie.getId(), movie.getTitle(), movie.getPosterUrl(),
-                movie.getScore(), movie.getAgeRating(),
-                genres.stream().map(Genre::getName).toList()
-        );
+        return MovieSummaryResponse.builder()
+                .id(movie.getId())
+                .title(movie.getTitle())
+                .posterUrl(movie.getPosterUrl())
+                .score(movie.getScore())
+                .ageRating(movie.getAgeRating())
+                .genres(genres.stream().map(Genre::getName).toList())
+                .build();
     }
 
     private ReviewResponse toReviewResponse(Review review) {
-        return new ReviewResponse(
-                review.getId(), review.getUser().getId(), review.getUser().getUserName(),
-                review.getUser().getAvatarUrl(), review.getRating(), review.getComment(),
-                review.getCreatedAt()
-        );
+        User user = review.getUser();
+
+        return ReviewResponse.builder()
+                .id(review.getId())
+                .userId(user.getId())
+                .userName(user.getUserName())
+                .userAvatarUrl(user.getAvatarUrl())
+                .rating(review.getRating())
+                .comment(review.getComment())
+                .createdAt(review.getCreatedAt())
+                .build();
     }
 }
