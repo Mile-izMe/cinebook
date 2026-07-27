@@ -77,3 +77,10 @@ rabbitmq:
     review:
       queue: cinebook.review.dlq
       routing-key: review.dlq.key
+
+minio:
+  endpoint: http://localhost:9000
+  bucket: cinebook
+  access-key: cinebook
+  secret-key: cinebook123
+  public-base-url: http://localhost:9000/cinebook

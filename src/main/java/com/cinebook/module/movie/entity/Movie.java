@@ -33,8 +33,14 @@ public class Movie extends Auditable {
     @Column(name = "poster_url")
     private String posterUrl;
 
+    @Column(name = "poster_object_key")
+    private String posterObjectKey;
+
     @Column(name = "backdrop_url")
     private String backdropUrl;
+
+    @Column(name = "backdrop_object_key")
+    private String backdropObjectKey;
 
     @Column(name = "trailer_url")
     private String trailerUrl;

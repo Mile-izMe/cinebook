@@ -19,6 +19,9 @@ import com.cinebook.module.movie.repository.MovieRepository;
 import com.cinebook.module.review.dto.response.ReviewResponse;
 import com.cinebook.module.review.entity.Review;
 import com.cinebook.module.review.repository.ReviewRepository;
+import com.cinebook.module.storage.service.MinioBuildService;
+import com.cinebook.module.storage.service.MinioGetService;
+import com.cinebook.module.storage.service.MinioWriteService;
 import com.cinebook.module.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +42,11 @@ public class MovieService {
     private final ReviewRepository reviewRepository;
     private final GenreRepository genreRepository;
     private final CursorCodec cursorCodec;
+
+    // ============ MINIO ================
+    private final MinioGetService minioGetService;
+    private final MinioBuildService minioBuildService;
+    private final MinioWriteService minioWriteService;
 
     // -----------------------------------------------------------
     // Movie CRUD
@@ -59,6 +68,13 @@ public class MovieService {
                 .cast(request.cast())
                 .trailerUrl(request.trailerUrl())
                 .build();
+
+        // deleteObject(null) auto no-op
+        updateImageIfChanged(movie, request.posterObjectKey(), null,
+                movie::setPosterObjectKey, movie::setPosterUrl);
+        updateImageIfChanged(movie, request.backdropObjectKey(), null,
+                movie::setBackdropObjectKey, movie::setBackdropUrl);
+
         movie = movieRepository.save(movie);
 
         attachGenres(movie, genres);
@@ -90,6 +106,11 @@ public class MovieService {
         // (a handful of rows per movie) vs. diffing add/remove sets.
         movieGenreRepository.deleteAllByMovieId(movieId);
         attachGenres(movie, genres);
+
+        updateImageIfChanged(movie, request.posterObjectKey(), movie.getPosterObjectKey(),
+                movie::setPosterObjectKey, movie::setPosterUrl);
+        updateImageIfChanged(movie, request.backdropObjectKey(), movie.getBackdropObjectKey(),
+                movie::setBackdropObjectKey, movie::setBackdropUrl);
 
         return toSummary(movie, genres);
     }
@@ -202,5 +223,15 @@ public class MovieService {
                 .comment(review.getComment())
                 .createdAt(review.getCreatedAt())
                 .build();
+    }
+
+    private void updateImageIfChanged(Movie movie, String newObjectKey, String oldObjectKey,
+                                      Consumer<String> setObjectKey, Consumer<String> setUrl) {
+        if (newObjectKey == null || newObjectKey.equals(oldObjectKey)) return;
+
+        minioGetService.requireObjectExists(newObjectKey);
+        setObjectKey.accept(newObjectKey);
+        setUrl.accept(minioBuildService.buildPublicUrl(newObjectKey));
+        minioWriteService.deleteObject(oldObjectKey);
     }
 }

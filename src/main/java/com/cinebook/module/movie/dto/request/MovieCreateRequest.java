@@ -1,5 +1,6 @@
 package com.cinebook.module.movie.dto.request;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -36,7 +37,12 @@ public record MovieCreateRequest(
         String trailerUrl,
 
         @NotEmpty(message = "Film must at least belong to 1 genre!")
-        List<UUID> genreIds
+        List<UUID> genreIds,
 
+        @Nullable
+        String posterObjectKey,
+
+        @Nullable
+        String backdropObjectKey
 ) {
 }

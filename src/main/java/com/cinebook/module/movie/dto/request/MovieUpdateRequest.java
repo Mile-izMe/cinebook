@@ -1,5 +1,6 @@
 package com.cinebook.module.movie.dto.request;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -33,9 +34,16 @@ public record MovieUpdateRequest(
         @NotEmpty
         List<String> cast,
 
+        @Nullable
         String trailerUrl,
 
         @NotEmpty
-        List<UUID> genreIds
+        List<UUID> genreIds,
+
+        @Nullable
+        String posterObjectKey,
+
+        @Nullable
+        String backdropObjectKey
 ) {
 }
