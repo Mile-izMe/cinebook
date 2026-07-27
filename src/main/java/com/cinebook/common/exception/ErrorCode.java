@@ -12,6 +12,7 @@ public enum ErrorCode {
     CONFLICT_ERROR(HttpStatus.CONFLICT, "SYS-409", "Data has conflicts!"),
 
     // --- Business Error ---
+    // --- Auth / user erros
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USR-001", "User not found in system"),
     EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "USR-002", "Email already existed in system"),
     PHONE_ALREADY_EXISTS(HttpStatus.CONFLICT, "USR-003", "Phone already existed in system"),
@@ -21,7 +22,15 @@ public enum ErrorCode {
     INVALID_ACCESS_TOKEN(HttpStatus.BAD_REQUEST, "USR-007", "Invalid access token"),
     ACCESS_DENIED(HttpStatus.BAD_REQUEST, "USR-008", "You do not have permission to this function"),
     INVALID_REFRESH_TOKEN(HttpStatus.BAD_REQUEST, "USR-009", "Invalid refresh token"),
-    REFRESH_TOKEN_EXPIRED(HttpStatus.BAD_REQUEST, "USR-010", "Refresh token has expired");
+    REFRESH_TOKEN_EXPIRED(HttpStatus.BAD_REQUEST, "USR-010", "Refresh token has expired"),
+
+    // --- Movie module errors ---
+    MOVIE_NOT_FOUND(HttpStatus.NOT_FOUND, "MOV-001", "Khong tim thay phim"),
+    GENRE_NOT_FOUND(HttpStatus.NOT_FOUND, "MOV-002", "Khong tim thay the loai"),
+    REVIEW_ALREADY_EXISTS(HttpStatus.CONFLICT, "MOV-003", "Ban da danh gia phim nay roi"),
+    INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "MOV-004", "Dinh dang file khong hop le, chi chap nhan anh"),
+    FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, "MOV-005", "Kich thuoc file vuot qua gioi han cho phep"),
+    FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "MOV-006", "Tai file len that bai, vui long thu lai");
 
     private final HttpStatus status;
     private final String code;
