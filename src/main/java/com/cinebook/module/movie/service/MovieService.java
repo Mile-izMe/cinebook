@@ -70,9 +70,9 @@ public class MovieService {
                 .build();
 
         // deleteObject(null) auto no-op
-        updateImageIfChanged(movie, request.posterObjectKey(), null,
+        applyImage(movie, request.posterObjectKey(), request.posterUrl(),
                 movie::setPosterObjectKey, movie::setPosterUrl);
-        updateImageIfChanged(movie, request.backdropObjectKey(), null,
+        applyImage(movie, request.backdropObjectKey(), request.backdropUrl(),
                 movie::setBackdropObjectKey, movie::setBackdropUrl);
 
         movie = movieRepository.save(movie);
@@ -205,6 +205,7 @@ public class MovieService {
                 .id(movie.getId())
                 .title(movie.getTitle())
                 .posterUrl(movie.getPosterUrl())
+                .backdropUrl(movie.getBackdropUrl())
                 .score(movie.getScore())
                 .ageRating(movie.getAgeRating())
                 .genres(genres.stream().map(Genre::getName).toList())
@@ -233,5 +234,21 @@ public class MovieService {
         setObjectKey.accept(newObjectKey);
         setUrl.accept(minioBuildService.buildPublicUrl(newObjectKey));
         minioWriteService.deleteObject(oldObjectKey);
+    }
+
+    /**
+     * Used at CREATE time only: prefer a real uploaded object (MinIO, via presign
+     * flow), fall back to a raw external URL (e.g. seeded from TMDB) when no
+     * objectKey is present. Never both - objectKey wins if both happen to be sent.
+     */
+    private void applyImage(Movie movie, String objectKey, String externalUrl,
+                            Consumer<String> setObjectKey, Consumer<String> setUrl) {
+        if (objectKey != null) {
+            minioGetService.requireObjectExists(objectKey);
+            setObjectKey.accept(objectKey);
+            setUrl.accept(minioBuildService.buildPublicUrl(objectKey));
+        } else if (externalUrl != null) {
+            setUrl.accept(externalUrl); // no objectKey to track - nothing to clean up in MinIO later
+        }
     }
 }

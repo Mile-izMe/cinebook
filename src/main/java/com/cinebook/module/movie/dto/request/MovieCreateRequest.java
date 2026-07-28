@@ -40,6 +40,12 @@ public record MovieCreateRequest(
         List<UUID> genreIds,
 
         @Nullable
+        String posterUrl,
+
+        @Nullable
+        String backdropUrl,
+
+        @Nullable
         String posterObjectKey,
 
         @Nullable

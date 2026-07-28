@@ -11,6 +11,7 @@ public record MovieSummaryResponse(
         UUID id,
         String title,
         String posterUrl,
+        String backdropUrl,
         BigDecimal score,
         String ageRating,
         List<String> genres
