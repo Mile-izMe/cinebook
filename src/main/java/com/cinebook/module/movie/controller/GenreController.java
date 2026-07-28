@@ -1,5 +1,6 @@
 package com.cinebook.module.movie.controller;
 
+import com.cinebook.common.response.ApiSuccessResponse;
 import com.cinebook.module.movie.dto.response.GenreResponse;
 import com.cinebook.module.movie.repository.GenreRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,10 +21,16 @@ public class GenreController {
     // Read-only, public - genres are reference data seeded via Flyway.
     // No admin CRUD endpoint for now; add one later if the list needs to grow at runtime.
     @GetMapping
-    public ResponseEntity<List<GenreResponse>> list() {
+    public ResponseEntity<ApiSuccessResponse<List<GenreResponse>>> list() {
         List<GenreResponse> genres = genreRepository.findAll().stream()
                 .map(g -> new GenreResponse(g.getId(), g.getName()))
                 .toList();
-        return ResponseEntity.ok(genres);
+
+        ApiSuccessResponse<List<GenreResponse>> response = ApiSuccessResponse.<List<GenreResponse>>builder()
+                .message("Get genres successful")
+                .data(genres)
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 }

@@ -10,10 +10,12 @@ import java.util.UUID;
 public record MovieSummaryResponse(
         UUID id,
         String title,
+        String description,
         String posterUrl,
         String backdropUrl,
+        Integer duration,
         BigDecimal score,
         String ageRating,
-        List<String> genres
+        List<GenreResponse> genres
 ) {
 }

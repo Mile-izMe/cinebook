@@ -204,11 +204,15 @@ public class MovieService {
         return MovieSummaryResponse.builder()
                 .id(movie.getId())
                 .title(movie.getTitle())
+                .description(movie.getDescription())
                 .posterUrl(movie.getPosterUrl())
                 .backdropUrl(movie.getBackdropUrl())
+                .duration(movie.getDuration())
                 .score(movie.getScore())
                 .ageRating(movie.getAgeRating())
-                .genres(genres.stream().map(Genre::getName).toList())
+                .genres(genres.stream()
+                        .map(g -> new GenreResponse(g.getId(), g.getName()))
+                        .toList())
                 .build();
     }
 

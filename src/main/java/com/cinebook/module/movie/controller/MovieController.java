@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,6 +27,7 @@ public class MovieController {
     private final MovieService movieService;
 
     // ---- Admin-only writes, enforced in SecurityConfig ----
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<ApiSuccessResponse<MovieSummaryResponse>> create(
             @Valid @RequestBody MovieCreateRequest request) {
@@ -39,6 +41,7 @@ public class MovieController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<ApiSuccessResponse<MovieSummaryResponse>> update(@PathVariable UUID id,
                                                                            @Valid @RequestBody MovieUpdateRequest request) {
@@ -52,6 +55,7 @@ public class MovieController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         movieService.delete(id);
@@ -62,11 +66,11 @@ public class MovieController {
     @GetMapping
     public ResponseEntity<ApiSuccessResponse<List<MovieSummaryResponse>>> search(
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) UUID genre,
+            @RequestParam(required = false) UUID genreId,
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "20") int limit) {
         int safeLimit = Math.min(limit, 50);
-        CursorPageResponse<MovieSummaryResponse> page = movieService.search(keyword, genre, cursor, safeLimit);
+        CursorPageResponse<MovieSummaryResponse> page = movieService.search(keyword, genreId, cursor, safeLimit);
 
         return ResponseEntity.ok(ApiSuccessResponse.ofCursorPage(page, safeLimit, "Get list movies successful"));
     }

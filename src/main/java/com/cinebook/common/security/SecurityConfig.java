@@ -94,6 +94,11 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/verify-email",
                                 "/api/auth/login", "/api/auth/refresh").permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/movies",
+                                "/api/movies/**",
+                                "/api/genres"
+                        ).permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/api/auth/logout", "/api/auth/me").authenticated() // needs the JWT to know which user/device
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
