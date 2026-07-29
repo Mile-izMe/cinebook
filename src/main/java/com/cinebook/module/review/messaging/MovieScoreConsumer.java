@@ -33,9 +33,14 @@ public class MovieScoreConsumer {
     @Transactional
     public void onMovieReviewed(MovieReviewedEvent event) {
         BigDecimal rawAvg = reviewRepository.averageRatingByMovieId(event.movieId());
-        BigDecimal score = rawAvg == null ? null : rawAvg.setScale(1, RoundingMode.HALF_UP);
 
-        movieRepository.updateScore(event.movieId(), score);
-        log.info("Recalculated score for movieId={} -> {}", event.movieId(), score);
+        if (rawAvg != null) {
+            // MULTIPLY TO MAKE FROM 5 SCORE (User) TO 10 SCORE (Global/TMDB)
+            BigDecimal normalizedAvg = rawAvg.multiply(new BigDecimal("2"));
+            BigDecimal score = normalizedAvg.setScale(1, RoundingMode.HALF_UP);
+
+            movieRepository.updateScore(event.movieId(), score);
+            log.info("Recalculated score for movieId={} -> {}", event.movieId(), score);
+        }
     }
 }
