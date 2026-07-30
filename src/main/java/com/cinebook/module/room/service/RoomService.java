@@ -45,7 +45,7 @@ public class RoomService {
         return roomMapper.toResponse(roomRepository.save(room));
     }
 
-    Room findOrThrow(UUID id) {
+    public Room findOrThrow(UUID id) {
         return roomRepository.findById(id)
                 .orElseThrow(() -> new CinebookException(ErrorCode.ROOM_NOT_FOUND));
     }
