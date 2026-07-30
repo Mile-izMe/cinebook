@@ -151,8 +151,7 @@ public class MovieService {
     // -----------------------------------------------------------
     @Transactional(readOnly = true)
     public MovieDetailResponse getDetail(UUID movieId) {
-        Movie movie = movieRepository.findById(movieId)
-                .orElseThrow(() -> new CinebookException(ErrorCode.MOVIE_NOT_FOUND));
+        Movie movie = findOrThrow(movieId);
 
         List<GenreResponse> genres = genresOf(movieId).stream()
                 .map(g -> new GenreResponse(g.getId(), g.getName()))
@@ -254,5 +253,10 @@ public class MovieService {
         } else if (externalUrl != null) {
             setUrl.accept(externalUrl); // no objectKey to track - nothing to clean up in MinIO later
         }
+    }
+
+    public Movie findOrThrow(UUID movieId) {
+        return movieRepository.findById(movieId)
+                .orElseThrow(() -> new CinebookException(ErrorCode.MOVIE_NOT_FOUND));
     }
 }
