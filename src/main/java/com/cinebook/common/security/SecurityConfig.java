@@ -97,7 +97,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET,
                                 "/api/movies",
                                 "/api/movies/**",
-                                "/api/genres"
+                                "/api/genres",
+                                "/api/cities",
+                                "/api/cities/**",
+                                "/api/cinemas/**",
+                                "/api/showtimes",
+                                "/api/showtimes/**"
                         ).permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/api/auth/logout", "/api/auth/me").authenticated() // needs the JWT to know which user/device

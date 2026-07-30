@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -37,6 +38,7 @@ public class CityController {
                 .build());
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<ApiSuccessResponse<CityResponse>> create(@Valid @RequestBody CityCreateRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiSuccessResponse.<CityResponse>builder()
@@ -45,6 +47,7 @@ public class CityController {
                 .build());
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<ApiSuccessResponse<CityResponse>> update(@PathVariable UUID id,
                                                                    @Valid @RequestBody CityUpdateRequest request) {
@@ -54,6 +57,7 @@ public class CityController {
                 .build());
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         cityService.delete(id);
