@@ -54,7 +54,7 @@ public class CinemaService {
     }
 
     // ============= HELPER ===============
-    Cinema findOrThrow(UUID id) {
+    public Cinema findOrThrow(UUID id) {
         return cinemaRepository.findById(id)
                 .orElseThrow(() -> new CinebookException(ErrorCode.CINEMA_NOT_FOUND));
     }
