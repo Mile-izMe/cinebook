@@ -12,7 +12,7 @@ public enum ErrorCode {
     CONFLICT_ERROR(HttpStatus.CONFLICT, "SYS-409", "Data has conflicts!"),
 
     // --- Business Error ---
-    // --- Auth / user erros
+    // --- Auth / user errors
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USR-001", "User not found in system"),
     EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "USR-002", "Email already existed in system"),
     PHONE_ALREADY_EXISTS(HttpStatus.CONFLICT, "USR-003", "Phone already existed in system"),
@@ -25,12 +25,20 @@ public enum ErrorCode {
     REFRESH_TOKEN_EXPIRED(HttpStatus.BAD_REQUEST, "USR-010", "Refresh token has expired"),
 
     // --- Movie module errors ---
-    MOVIE_NOT_FOUND(HttpStatus.NOT_FOUND, "MOV-001", "Khong tim thay phim"),
-    GENRE_NOT_FOUND(HttpStatus.NOT_FOUND, "MOV-002", "Khong tim thay the loai"),
-    REVIEW_ALREADY_EXISTS(HttpStatus.CONFLICT, "MOV-003", "Ban da danh gia phim nay roi"),
-    INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "MOV-004", "Dinh dang file khong hop le, chi chap nhan anh"),
-    FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, "MOV-005", "Kich thuoc file vuot qua gioi han cho phep"),
-    FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "MOV-006", "Tai file len that bai, vui long thu lai");
+    MOVIE_NOT_FOUND(HttpStatus.NOT_FOUND, "MOV-001", "Movie not found"),
+    GENRE_NOT_FOUND(HttpStatus.NOT_FOUND, "MOV-002", "Genre not found"),
+    REVIEW_ALREADY_EXISTS(HttpStatus.CONFLICT, "MOV-003", "You have already reviewed this movie"),
+    INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "MOV-004", "Invalid file type, only image files are allowed"),
+    FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, "MOV-005", "File size exceeds the allowed limit"),
+    FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "MOV-006", "Failed to upload file, please try again"),
+
+    // --- City module errors ---
+    CITY_NOT_FOUND(HttpStatus.NOT_FOUND, "CIN-001", "City not found"),
+    CINEMA_NOT_FOUND(HttpStatus.NOT_FOUND, "CIN-002", "Cinema not found"),
+    ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "CIN-003", "Screening room not found"),
+    SEATS_ALREADY_GENERATED(HttpStatus.CONFLICT, "CIN-004", "Seats have already been generated for this room, cannot regenerate"),
+    SHOWTIME_NOT_FOUND(HttpStatus.NOT_FOUND, "CIN-005", "Showtime not found"),
+    SHOWTIME_OVERLAP(HttpStatus.CONFLICT, "CIN-006", "Showtime overlaps with another showtime in the same room");
 
     private final HttpStatus status;
     private final String code;
