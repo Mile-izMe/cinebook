@@ -66,4 +66,7 @@ public class Movie extends Auditable {
     @Column(name = "\"cast\"", nullable = false) // "cast" is a reserved word in Postgres
     @JdbcTypeCode(SqlTypes.ARRAY)
     private List<String> cast;
+
+    @OneToMany(mappedBy = "movie", fetch = FetchType.LAZY)
+    private List<MovieGenre> movieGenres;
 }

@@ -16,15 +16,19 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, UUID> {
      * all contains filter or not, no need to build active query.
      */
     @Query("""
-            SELECT s FROM Showtime s
-            WHERE s.movie.id = :movieId
-              AND s.deletedAt IS NULL
-              AND (:cinemaId IS NULL OR s.room.cinema.id = :cinemaId)
-              AND (:date IS NULL OR CAST(s.startTime AS date) = :date)
-            ORDER BY s.startTime ASC
+              SELECT s FROM Showtime s
+              WHERE s.movie.id = :movieId
+                AND s.deletedAt IS NULL
+                AND (:cityId IS NULL OR s.room.cinema.city.id = :cityId)
+                AND (:cinemaId IS NULL OR s.room.cinema.id = :cinemaId)
+                AND (:format IS NULL OR s.format = :format)
+                AND (CAST(:date AS date) IS NULL OR CAST(s.startTime AS date) = :date)
+              ORDER BY s.room.cinema.id, s.startTime ASC
             """)
     List<Showtime> findByMovieAndFilters(@Param("movieId") UUID movieId,
-                                         @Param("cinemaId") UUID cinemaId,
+                                         @Param("cityId") UUID cityId,
+                                         @Param("cityId") UUID cinemaId,
+                                         @Param("format") String format,
                                          @Param("date") LocalDate date);
 
     boolean existsByRoomIdAndStartTimeBetween(UUID roomId, java.time.LocalDateTime start, java.time.LocalDateTime end);

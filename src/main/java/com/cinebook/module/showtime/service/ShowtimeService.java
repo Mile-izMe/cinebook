@@ -57,8 +57,8 @@ public class ShowtimeService {
     }
 
     @Transactional(readOnly = true)
-    public List<ShowtimeResponse> listByMovie(UUID movieId, UUID cinemaId, LocalDate date) {
-        return showtimeRepository.findByMovieAndFilters(movieId, cinemaId, date).stream()
+    public List<ShowtimeResponse> listByMovie(UUID movieId, UUID cityId, UUID cinemaId, String format, LocalDate date) {
+        return showtimeRepository.findByMovieAndFilters(movieId, cityId, cinemaId, format, date).stream()
                 .map(showtimeMapper::toResponse)
                 .toList();
     }

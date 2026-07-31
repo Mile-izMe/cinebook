@@ -33,11 +33,13 @@ public class ShowtimeController {
     @GetMapping("/api/movies/{movieId}/showtimes")
     public ResponseEntity<ApiSuccessResponse<List<ShowtimeResponse>>> listByMovie(
             @PathVariable UUID movieId,
+            @RequestParam(required = false) UUID cityId,
             @RequestParam(required = false) UUID cinemaId,
+            @RequestParam(required = false) String format,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return ResponseEntity.ok(ApiSuccessResponse.<List<ShowtimeResponse>>builder()
                 .message("Get list showtime successful!")
-                .data(showtimeService.listByMovie(movieId, cinemaId, date))
+                .data(showtimeService.listByMovie(movieId, cityId, cinemaId, format, date))
                 .build());
     }
 

@@ -104,6 +104,9 @@ public class SecurityConfig {
                                 "/api/showtimes",
                                 "/api/showtimes/**"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/cities", "/api/cinemas",
+                                "/api/cinemas/*/rooms", "/api/rooms/*/seats/generate-seats",
+                                "/api/showtimes").hasRole("ADMIN")
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/api/auth/logout", "/api/auth/me").authenticated() // needs the JWT to know which user/device
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
