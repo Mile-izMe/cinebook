@@ -38,7 +38,17 @@ public enum ErrorCode {
     ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "CIN-003", "Screening room not found"),
     SEATS_ALREADY_GENERATED(HttpStatus.CONFLICT, "CIN-004", "Seats have already been generated for this room, cannot regenerate"),
     SHOWTIME_NOT_FOUND(HttpStatus.NOT_FOUND, "CIN-005", "Showtime not found"),
-    SHOWTIME_OVERLAP(HttpStatus.CONFLICT, "CIN-006", "Showtime overlaps with another showtime in the same room");
+    SHOWTIME_OVERLAP(HttpStatus.CONFLICT, "CIN-006", "Showtime overlaps with another showtime in the same room"),
+
+    // --- Booking business errors ---
+    SHOWTIME_ALREADY_STARTED(HttpStatus.BAD_REQUEST, "BOOK-001", "The showtime has already started, tickets cannot be booked"),
+    SEAT_NOT_IN_ROOM(HttpStatus.BAD_REQUEST, "BOOK-002", "The seat does not belong to the room for this showtime"),
+    SEAT_NOT_FOUND(HttpStatus.NOT_FOUND, "BOOK-003", "Seat not found"),
+    SEAT_ALREADY_BOOKED(HttpStatus.CONFLICT, "BOOK-004", "The seat has already been booked by someone else"),
+    BOOKING_NOT_FOUND(HttpStatus.NOT_FOUND, "BOOK-005", "Booking not found"),
+    BOOKING_ACCESS_DENIED(HttpStatus.FORBIDDEN, "BOOK-006", "You do not have permission to access this booking"),
+    INVALID_BOOKING_TRANSITION(HttpStatus.BAD_REQUEST, "BOOK-007", "Invalid booking status transition");
+
 
     private final HttpStatus status;
     private final String code;
