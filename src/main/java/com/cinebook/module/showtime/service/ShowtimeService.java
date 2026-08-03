@@ -2,11 +2,16 @@ package com.cinebook.module.showtime.service;
 
 import com.cinebook.common.exception.CinebookException;
 import com.cinebook.common.exception.ErrorCode;
+import com.cinebook.module.cinema.entity.Cinema;
+import com.cinebook.module.cinema.service.CinemaService;
 import com.cinebook.module.movie.entity.Movie;
 import com.cinebook.module.movie.service.MovieService;
 import com.cinebook.module.room.entity.Room;
 import com.cinebook.module.room.service.RoomService;
+import com.cinebook.module.seat.entity.Seat;
+import com.cinebook.module.seat.repository.SeatRepository;
 import com.cinebook.module.showtime.dto.request.ShowtimeCreateRequest;
+import com.cinebook.module.showtime.dto.response.SeatMapResponse;
 import com.cinebook.module.showtime.dto.response.ShowtimeResponse;
 import com.cinebook.module.showtime.entity.Showtime;
 import com.cinebook.module.showtime.mapper.ShowtimeMapper;
@@ -16,16 +21,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ShowtimeService {
 
     private final ShowtimeRepository showtimeRepository;
+    private final SeatRepository seatRepository;
     private final MovieService movieService;
     private final RoomService roomService;
+    private final CinemaService cinemaService;
     private final ShowtimeMapper showtimeMapper;
 
     @Transactional
@@ -66,6 +76,59 @@ public class ShowtimeService {
     @Transactional(readOnly = true)
     public ShowtimeResponse getById(UUID id) {
         return showtimeMapper.toResponse(findOrThrow(id));
+    }
+
+    @Transactional(readOnly = true)
+    public SeatMapResponse getSeatMap(UUID showtimeId) {
+        Showtime showtime = findOrThrow(showtimeId);
+        UUID movieId = showtime.getMovie().getId();
+        UUID roomId = showtime.getRoom().getId();
+        Movie movie = movieService.findOrThrow(movieId);
+        Room room = roomService.findOrThrow(roomId);
+        Cinema cinema = cinemaService.findOrThrow(room.getCinema().getId());
+
+        List<Seat> seats = seatRepository.findAllByRoomIdOrderByRowAscNumberAsc(roomId);
+
+        // Group by row, keep A -> B -> C...
+        Map<String, List<Seat>> grouped = seats.stream()
+                .collect(Collectors.groupingBy(Seat::getRow, java.util.LinkedHashMap::new, Collectors.toList()));
+
+        List<SeatMapResponse.SeatMapRow> rows = grouped.entrySet().stream()
+                .map(entry -> new SeatMapResponse.SeatMapRow(
+                        entry.getKey(),
+                        entry.getValue().stream()
+                                .sorted(Comparator.comparing(Seat::getNumber))
+                                .map(seat -> new SeatMapResponse.SeatMapSeat(
+                                        seat.getId(),
+                                        seat.label(),
+                                        seat.getSeatType().name(),
+                                        calculatePrice(showtime.getBasePrice(), seat.getSeatType()),
+                                        // Phase 4: fake AVAILABLE for all seats.
+                                        // Phase 6 (Redis Lock) will change real status
+                                        // from showtime_seat/Redis.
+                                        "AVAILABLE"
+                                ))
+                                .toList()
+                ))
+                .toList();
+
+        return new SeatMapResponse(
+                showtime.getId(),
+                SeatMapResponse.MovieSummary.from(movie),
+                SeatMapResponse.CinemaSummary.from(cinema),
+                SeatMapResponse.RoomSummary.from(room),
+                showtime.getStartTime(),
+                showtime.getFormat(),
+                rows
+        );
+    }
+
+    private Integer calculatePrice(Integer basePrice, com.cinebook.module.seat.entity.SeatType type) {
+        return switch (type) {
+            case VIP -> basePrice + 20000;
+            case COUPLE -> basePrice + 50000;
+            case WHEELCHAIR, STANDARD -> basePrice;
+        };
     }
 
     @Transactional(readOnly = true)

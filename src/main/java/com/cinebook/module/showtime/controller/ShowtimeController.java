@@ -2,6 +2,7 @@ package com.cinebook.module.showtime.controller;
 
 import com.cinebook.common.response.ApiSuccessResponse;
 import com.cinebook.module.showtime.dto.request.ShowtimeCreateRequest;
+import com.cinebook.module.showtime.dto.response.SeatMapResponse;
 import com.cinebook.module.showtime.dto.response.ShowtimeResponse;
 import com.cinebook.module.showtime.service.ShowtimeService;
 import jakarta.validation.Valid;
@@ -48,6 +49,14 @@ public class ShowtimeController {
         return ResponseEntity.ok(ApiSuccessResponse.<ShowtimeResponse>builder()
                 .message("Get detail showtime successful!")
                 .data(showtimeService.getById(id))
+                .build());
+    }
+
+    @GetMapping("/api/showtimes/{id}/seats")
+    public ResponseEntity<ApiSuccessResponse<SeatMapResponse>> getSeatMap(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiSuccessResponse.<SeatMapResponse>builder()
+                .message("Get seat map successful!")
+                .data(showtimeService.getSeatMap(id))
                 .build());
     }
 }
