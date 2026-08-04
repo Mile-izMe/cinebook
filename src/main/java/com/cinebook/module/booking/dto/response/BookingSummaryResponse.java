@@ -11,7 +11,7 @@ public record BookingSummaryResponse(
         UUID bookingId,
         String movieName,
         String posterUrl,
-        List<SeatInformation> seats,
+        List<String> seats,
         Instant showtimeStart,
         Integer totalPrice,
         BookingStatus status

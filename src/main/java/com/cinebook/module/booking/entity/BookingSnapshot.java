@@ -10,6 +10,6 @@ public record BookingSnapshot(
         String roomName,
         String startTime,
         String format,
-        List<SeatInformation> seats
+        List<String> seats
 ) {
 }

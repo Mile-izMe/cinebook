@@ -63,4 +63,8 @@ public class SeatService {
         return seatRepository.saveAll(seats).stream().map(seatMapper::toResponse).toList();
     }
 
+    public Seat findOrThrow(UUID seatId) {
+        return seatRepository.findById(seatId)
+                .orElseThrow(() -> new CinebookException(ErrorCode.SEAT_NOT_FOUND));
+    }
 }
