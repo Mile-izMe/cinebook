@@ -27,7 +27,7 @@ public class BookingController {
 
     // ===================== MEMBER ==========================
     // ---- Create Booking ----
-    @PostMapping("/api/bookings")
+    @PostMapping
     public ResponseEntity<ApiSuccessResponse<BookingResponse>> create(
             @Valid @RequestBody BookingCreateRequest request,
             @Nullable @AuthenticationPrincipal CustomerUserDetails userDetails) {

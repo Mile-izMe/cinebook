@@ -93,7 +93,7 @@ public class SecurityConfig {
                                 "/webjars/**"
                         ).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/verify-email",
-                                "/api/auth/login", "/api/auth/refresh").permitAll()
+                                "/api/auth/login", "/api/auth/refresh", "/api/bookings", "/api/bookings/guest/*").permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/movies",
                                 "/api/movies/**",
@@ -102,11 +102,13 @@ public class SecurityConfig {
                                 "/api/cities/**",
                                 "/api/cinemas/**",
                                 "/api/showtimes",
-                                "/api/showtimes/**"
+                                "/api/showtimes/**",
+                                "/api/bookings/guest/*"
                         ).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/cities", "/api/cinemas",
                                 "/api/cinemas/*/rooms", "/api/rooms/*/seats/generate-seats",
                                 "/api/showtimes").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/bookings/*").authenticated()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/api/auth/logout", "/api/auth/me").authenticated() // needs the JWT to know which user/device
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
