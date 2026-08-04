@@ -16,7 +16,6 @@ import com.cinebook.module.booking.repository.BookingQueryRepository;
 import com.cinebook.module.booking.repository.BookingRepository;
 import com.cinebook.module.booking.repository.BookingSeatRepository;
 import com.cinebook.module.booking.validator.BookingStatusManager;
-import com.cinebook.module.booking.validator.BookingStatusTransitionPolicy;
 import com.cinebook.module.room.service.RoomService;
 import com.cinebook.module.seat.entity.Seat;
 import com.cinebook.module.seat.entity.SeatType;
@@ -62,7 +61,22 @@ public class BookingService {
     // -----------------------------------------------------------
     @Transactional
     public BookingResponse createBooking(UUID userId, BookingCreateRequest request) {
-        User user = userService.findOrThrow(userId);
+        User user = null;
+        String guestEmail = null;
+        String guestPhone = null;
+        String bookingCode = null;
+
+        if (userId != null) {
+            user = userService.findOrThrow(userId);
+        } else {
+            if (request.guestEmail() == null || request.guestPhone() == null) {
+                throw new CinebookException(ErrorCode.GUEST_INFO_REQUIRED);
+            }
+            guestEmail = request.guestEmail();
+            guestPhone = request.guestPhone();
+            bookingCode = generateBookingCode();
+        }
+
         Showtime showtime = showtimeService.findOrThrow(request.showtimeId());
 
         // --- Validation ---
@@ -119,6 +133,9 @@ public class BookingService {
         Booking booking = Booking.builder()
                 .showtime(showtime)
                 .user(user)
+                .guestEmail(guestEmail)
+                .guestPhone(guestPhone)
+                .bookingCode(bookingCode)
                 .snapshot(snapshot)
                 .totalPrice(totalPrice)
                 .status(BookingStatus.PENDING)
@@ -145,7 +162,11 @@ public class BookingService {
     ) {
     }
 
-    
+    private String generateBookingCode() {
+        // Format: 2 chars + 5 nums
+        return "CB" + String.format("%05d", new java.util.Random().nextInt(100000));
+    }
+
     // -----------------------------------------------------------
     // Booking History
     // -----------------------------------------------------------
@@ -180,7 +201,7 @@ public class BookingService {
     @Transactional
     public BookingResponse getBookingDetail(UUID userId, UUID bookingId) {
         Booking booking = findOrThrow(bookingId);
-        assertOwner(booking, userId);
+        assertMemberOwner(booking, userId);
 
         List<String> labels = bookingSeatRepository.findAllByBookingId(bookingId).stream()
                 .map(BookingSeat::getSeatLabel)
@@ -195,9 +216,49 @@ public class BookingService {
     @Transactional
     public void cancelBooking(UUID userId, UUID bookingId) {
         Booking booking = findOrThrow(bookingId);
-        assertOwner(booking, userId);
+        assertMemberOwner(booking, userId);
+        cancel(booking);
+    }
 
-        bookingStatusManager.changeStatus(booking, BookingStatus.CANCELLED);
+    // -----------------------------------------------------------
+    // Lookup Booking (GUEST)
+    // -----------------------------------------------------------
+    @Transactional(readOnly = true)
+    public BookingResponse lookupByCodeAndEmail(String bookingCode, String email) {
+        Booking booking = bookingRepository.findByBookingCode(bookingCode)
+                .orElseThrow(() -> new CinebookException(ErrorCode.BOOKING_NOT_FOUND));
+
+        boolean matches = booking.isGuestBooking()
+                ? email.equalsIgnoreCase(booking.getGuestEmail())
+                : email.equalsIgnoreCase(booking.getUser().getEmail());
+
+        if (!matches) {
+            throw new CinebookException(ErrorCode.BOOKING_ACCESS_DENIED);
+        }
+
+        List<String> labels = bookingSeatRepository.findAllByBookingId(booking.getId()).stream()
+                .map(BookingSeat::getSeatLabel)
+                .toList();
+
+        return bookingMapper.toResponse(booking, labels);
+    }
+
+    // -----------------------------------------------------------
+    // Cancel Booking (GUEST)
+    // -----------------------------------------------------------
+    @Transactional
+    public void cancelGuestBooking(
+            String bookingCode,
+            String email
+    ) {
+        Booking booking = bookingRepository.findByBookingCode(bookingCode)
+                .orElseThrow(() ->
+                        new CinebookException(ErrorCode.BOOKING_NOT_FOUND)
+                );
+
+        assertGuestOwner(booking, email);
+
+        cancel(booking);
     }
 
     // -----------------------------------------------------------
@@ -221,9 +282,24 @@ public class BookingService {
                 .orElseThrow(() -> new CinebookException(ErrorCode.BOOKING_NOT_FOUND));
     }
 
-    private void assertOwner(Booking booking, UUID userId) {
-        if (!booking.getUser().getId().equals(userId)) {
+    private void assertMemberOwner(Booking booking, UUID userId) {
+        if (booking.isGuestBooking()
+                || !booking.getUser().getId().equals(userId)) {
             throw new CinebookException(ErrorCode.BOOKING_ACCESS_DENIED);
         }
+    }
+
+    private void assertGuestOwner(Booking booking, String email) {
+        if (!booking.isGuestBooking() ||
+                !booking.getGuestEmail().equalsIgnoreCase(email)) {
+            throw new CinebookException(ErrorCode.BOOKING_ACCESS_DENIED);
+        }
+    }
+
+    private void cancel(Booking booking) {
+        bookingStatusManager.changeStatus(
+                booking,
+                BookingStatus.CANCELLED
+        );
     }
 }

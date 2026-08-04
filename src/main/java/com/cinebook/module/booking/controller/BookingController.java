@@ -9,6 +9,7 @@ import com.cinebook.module.booking.dto.response.BookingSummaryResponse;
 import com.cinebook.module.booking.service.BookingService;
 import com.cinebook.module.movie.dto.response.MovieDetailResponse;
 import com.cinebook.module.movie.dto.response.MovieSummaryResponse;
+import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,14 +27,16 @@ public class BookingController {
 
     private final BookingService bookingService;
 
+    // ===================== MEMBER ==========================
     // ---- Create Booking ----
     @PostMapping("/api/bookings")
     public ResponseEntity<ApiSuccessResponse<BookingResponse>> create(
             @Valid @RequestBody BookingCreateRequest request,
-            @AuthenticationPrincipal CustomerUserDetails userDetails) {
+            @Nullable @AuthenticationPrincipal CustomerUserDetails userDetails) {
+        UUID userId = (userDetails != null) ? userDetails.getUserId() : null;
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiSuccessResponse.<BookingResponse>builder()
                 .message("Create booking successful")
-                .data(bookingService.createBooking(userDetails.getUserId(), request))
+                .data(bookingService.createBooking(userId, request))
                 .build());
     }
 
@@ -76,5 +79,26 @@ public class BookingController {
         bookingService.cancelBooking(userDetails.getUserId(), id);
         return ResponseEntity.noContent().build();
     }
+    // ===================== END ==========================
 
+    // ===================== GUEST ========================
+    // ---- Lookup Booking ----
+    @GetMapping("/guest/lookup")
+    public ResponseEntity<ApiSuccessResponse<BookingResponse>> lookupGuestBooking(
+            @RequestParam String bookingCode, @RequestParam String email) {
+        return ResponseEntity.ok(ApiSuccessResponse.<BookingResponse>builder()
+                .message("Lookup booking successful")
+                .data(bookingService.lookupByCodeAndEmail(bookingCode, email))
+                .build());
+    }
+
+    @PostMapping("/guest/cancel")
+    public ResponseEntity<Void> cancelBooking(
+            @RequestBody String bookingCode,
+            @RequestBody String email
+    ) {
+        bookingService.cancelGuestBooking(bookingCode, email);
+        return ResponseEntity.noContent().build();
+    }
+    // ===================== END ==========================
 }

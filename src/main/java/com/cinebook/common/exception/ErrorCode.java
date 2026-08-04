@@ -47,7 +47,8 @@ public enum ErrorCode {
     SEAT_ALREADY_BOOKED(HttpStatus.CONFLICT, "BOOK-004", "The seat has already been booked by someone else"),
     BOOKING_NOT_FOUND(HttpStatus.NOT_FOUND, "BOOK-005", "Booking not found"),
     BOOKING_ACCESS_DENIED(HttpStatus.FORBIDDEN, "BOOK-006", "You do not have permission to access this booking"),
-    INVALID_BOOKING_TRANSITION(HttpStatus.BAD_REQUEST, "BOOK-007", "Invalid booking status transition");
+    INVALID_BOOKING_TRANSITION(HttpStatus.BAD_REQUEST, "BOOK-007", "Invalid booking status transition"),
+    GUEST_INFO_REQUIRED(HttpStatus.BAD_REQUEST, "BOOK-008", "You need to provide email and phone number");
 
 
     private final HttpStatus status;

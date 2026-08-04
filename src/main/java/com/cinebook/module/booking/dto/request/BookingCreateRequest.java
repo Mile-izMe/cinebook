@@ -10,7 +10,10 @@ public record BookingCreateRequest(
         @NotNull(message = "Showtime must no be empty!")
         UUID showtimeId,
 
-        @NotEmpty(message = "Must select at least 1 chair!")
-        List<UUID> seatIds
+        @NotEmpty(message = "Must select at least 1 seat!")
+        List<UUID> seatIds,
+
+        String guestEmail,
+        String guestPhone
 ) {
 }

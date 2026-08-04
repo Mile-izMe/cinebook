@@ -28,9 +28,18 @@ public class Booking extends Auditable {
     @JoinColumn(name = "showtime_id", nullable = false)
     private Showtime showtime;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "user_id", nullable = true)
     private User user;
+
+    @Column(name = "guest_email")
+    private String guestEmail;
+
+    @Column(name = "guest_phone")
+    private String guestPhone;
+
+    @Column(name = "booking_code", unique = true, length = 10)
+    private String bookingCode;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "snapshot", columnDefinition = "jsonb")
@@ -48,5 +57,9 @@ public class Booking extends Auditable {
 
     public void changeStatus(BookingStatus newStatus) {
         this.status = newStatus;
+    }
+
+    public boolean isGuestBooking() {
+        return user == null;
     }
 }
