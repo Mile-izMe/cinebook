@@ -7,8 +7,6 @@ import com.cinebook.module.booking.dto.request.BookingCreateRequest;
 import com.cinebook.module.booking.dto.response.BookingResponse;
 import com.cinebook.module.booking.dto.response.BookingSummaryResponse;
 import com.cinebook.module.booking.service.BookingService;
-import com.cinebook.module.movie.dto.response.MovieDetailResponse;
-import com.cinebook.module.movie.dto.response.MovieSummaryResponse;
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
