@@ -26,7 +26,7 @@ public class BookingController {
     private final BookingService bookingService;
 
     // ===================== MEMBER ==========================
-    // ---- Create Booking ----
+    // ---- Create Booking (GUEST + MEMBER) ----
     @PostMapping
     public ResponseEntity<ApiSuccessResponse<BookingResponse>> create(
             @Valid @RequestBody BookingCreateRequest request,

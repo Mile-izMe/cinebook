@@ -3,10 +3,10 @@ spring:
     active: dev
 
   mail:
-    host: ${MAIL_HOST:smtp.gmail.com}
-    port: ${MAIL_PORT:587}
-    username: ${MAIL_USER}
-    password: ${MAIL_PASS}
+    host: test@gmail.com
+    port: 587
+    username: test@gmail.com
+    password: 123123123
     properties:
       mail:
         smtp:
@@ -52,11 +52,11 @@ app:
     verify-token-ttl-minutes: 5
 
   mail:
-    from: ${MAIL_USER}
+    from: test@gmail.com
     verify-base-url: http://localhost:3000/verify-email
 
   jwt:
-    access-secret: ${JWT_ACCESS_SECRET}   # min 32 chars
+    access-secret: mot_chuoi_bi_mat_rat_dai_va_vo_nghia_danh_cho_moi_truong_test_123456  # min 32 chars
     access-token-ttl-minutes: 15          # 15 minutes
     refresh-token-ttl-days: 7             # 7 days
 

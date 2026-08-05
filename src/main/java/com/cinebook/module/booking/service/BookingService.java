@@ -16,6 +16,7 @@ import com.cinebook.module.booking.repository.BookingQueryRepository;
 import com.cinebook.module.booking.repository.BookingRepository;
 import com.cinebook.module.booking.repository.BookingSeatRepository;
 import com.cinebook.module.booking.validator.BookingStatusManager;
+import com.cinebook.module.lock.base.RedisLockBase;
 import com.cinebook.module.room.service.RoomService;
 import com.cinebook.module.seat.entity.Seat;
 import com.cinebook.module.seat.entity.SeatType;
@@ -26,18 +27,18 @@ import com.cinebook.module.showtime.service.ShowtimeService;
 import com.cinebook.module.user.entity.User;
 import com.cinebook.module.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.DayOfWeek;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.*;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class BookingService {
 
@@ -48,13 +49,12 @@ public class BookingService {
 
     private final UserService userService;
     private final ShowtimeService showtimeService;
-    private final RoomService roomService;
-    private final SeatService seatService;
 
     private final BookingMapper bookingMapper;
     private final CursorCodec cursorCodec;
     private final BookingStatusManager bookingStatusManager;
 
+    // ================ REDIS ===============
 
     // -----------------------------------------------------------
     // Create Booking
