@@ -6,6 +6,7 @@ import java.util.UUID;
 public record SeatLockValue(
         UUID ownerId,
         UUID seatId,
+        String lockToken,
         String bookingId,
         Instant lockedAt,
         Instant expiresAt

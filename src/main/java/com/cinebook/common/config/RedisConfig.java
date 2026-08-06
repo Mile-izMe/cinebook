@@ -40,13 +40,11 @@ public class RedisConfig {
      */
     @Bean
     public RedisMessageListenerContainer redisMessageListenerContainer(
-            RedisConnectionFactory connectionFactory,
-            KeyExpirationEventMessageListener expirationListener) {
+            RedisConnectionFactory connectionFactory) {
         connectionFactory.getConnection().setConfig("notify-keyspace-events", "Ex");
 
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
-        container.addMessageListener(expirationListener, expirationListener.getTopic());
         return container;
     }
 

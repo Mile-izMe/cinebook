@@ -3,6 +3,7 @@ package com.cinebook.module.seatlock.controller;
 import com.cinebook.common.response.ApiSuccessResponse;
 import com.cinebook.common.security.CustomerUserDetails;
 import com.cinebook.module.seatlock.dto.request.SeatLockRequest;
+import com.cinebook.module.seatlock.dto.request.SeatUnlockRequest;
 import com.cinebook.module.seatlock.dto.response.SeatLockResponse;
 import com.cinebook.module.seatlock.model.SeatLockValue;
 import com.cinebook.module.seatlock.service.SeatLockService;
@@ -33,7 +34,7 @@ public class SeatLockController {
         List<SeatLockValue> locked = seatLockService.lockSeats(ownerId, request.showtimeId(), request.seatIds());
 
         List<SeatLockResponse> response = locked.stream()
-                .map(v -> new SeatLockResponse(v.seatId(), v.expiresAt()))
+                .map(v -> new SeatLockResponse(v.seatId(), v.lockToken(), v.expiresAt()))
                 .toList();
 
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiSuccessResponse.<List<SeatLockResponse>>builder()
@@ -44,9 +45,8 @@ public class SeatLockController {
 
     @DeleteMapping
     public ResponseEntity<Void> unlock(
-            @Valid @RequestBody SeatLockRequest request,
-            @AuthenticationPrincipal CustomerUserDetails userDetails) {
-        seatLockService.unlockSeats(userDetails.getUserId(), request.showtimeId(), request.seatIds());
+            @Valid @RequestBody SeatUnlockRequest request) {
+        seatLockService.unlockSeats(request.showtimeId(), request.seatTokens());
         return ResponseEntity.noContent().build();
     }
 

@@ -17,7 +17,7 @@ public class LuaScriptProvider {
             
             local data = cjson.decode(raw)
             
-            if data.ownerId == ARGV[1] then
+            if data.lockToken == ARGV[1] then
                 return redis.call("del", KEYS[1])
             else
                 return -1

@@ -12,10 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -43,7 +40,8 @@ public class SeatLockService {
             for (UUID seatId : sorted) {
                 String key = keyFactory.buildKey(showtimeId, seatId);
                 Instant now = Instant.now();
-                SeatLockValue newValue = new SeatLockValue(ownerId, seatId, null, now, now.plusSeconds(ttl));
+                String lockToken = UUID.randomUUID().toString();
+                SeatLockValue newValue = new SeatLockValue(ownerId, seatId, lockToken, null, now, now.plusSeconds(ttl));
 
                 boolean acquired = seatLockRepository.acquireLock(key, newValue, Duration.ofSeconds(ttl));
 
@@ -79,11 +77,16 @@ public class SeatLockService {
     // -----------------------------------------------------------
     // Unlock (Proactive unlock chair)
     // -----------------------------------------------------------
-    public void unlockSeats(UUID ownerId, UUID showtimeId, List<UUID> seatIds) {
-        for (UUID seatId : seatIds) {
+    public void unlockSeats(UUID showtimeId, Map<UUID, String> seatTokens) {
+        for (Map.Entry<UUID, String> entry : seatTokens.entrySet()) {
+            UUID seatId = entry.getKey();
+            String lockToken = entry.getValue();
             String key = keyFactory.buildKey(showtimeId, seatId);
-            Long result = seatLockRepository.safeUnLock(key, ownerId);
-            if (result == 1) broadcaster.broadcastSeatReleased(showtimeId, seatId);
+            Long result = seatLockRepository.safeUnLock(key, lockToken);
+
+            if (result != null && result == 1L) {
+                broadcaster.broadcastSeatReleased(showtimeId, seatId);
+            }
             // result == -1 <=> key exist but belong to another owner - skip,
             // No throw error to avoid 1 wrong seat -> Make batch fail unlock of user.
         }

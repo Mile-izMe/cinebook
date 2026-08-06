@@ -3,7 +3,6 @@ package com.cinebook.module.seatlock.repository;
 import com.cinebook.module.seatlock.model.SeatLockValue;
 
 import java.time.Duration;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -15,7 +14,7 @@ public interface SeatLockRepository {
 
     void deleteLock(String key);
 
-    Long safeUnLock(String key, UUID ownerId);
+    Long safeUnLock(String key, String lockToken);
 
     Set<UUID> findLockedSeatIdsByShowtime(UUID showtimeId);
 }

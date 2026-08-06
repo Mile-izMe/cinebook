@@ -5,6 +5,7 @@ import java.util.UUID;
 
 public record SeatLockResponse(
         UUID seatId,
+        String lockToken,
         Instant expiresAt
 ) {
 }

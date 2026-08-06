@@ -46,9 +46,9 @@ public class RedisSeatLockRepository implements SeatLockRepository {
     }
 
     @Override
-    public Long safeUnLock(String key, UUID ownerId) {
+    public Long safeUnLock(String key, String lockToken) {
         RedisScript<Long> luaScript = provider.getSafeUnlockScript();
-        return redisTemplate.execute(luaScript, List.of(key), ownerId);
+        return redisTemplate.execute(luaScript, List.of(key), lockToken);
     }
 
     @Override
