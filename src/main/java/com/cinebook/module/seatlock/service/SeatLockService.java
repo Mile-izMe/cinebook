@@ -95,17 +95,17 @@ public class SeatLockService {
     // -----------------------------------------------------------
     // Verify Lock Owner (Before createBooking)
     // -----------------------------------------------------------
-    public boolean isLockedByOwner(UUID ownerId, UUID showtimeId, UUID seatId) {
+    public boolean isLockedByOwnerToken(UUID showtimeId, UUID seatId, String lockToken) {
         String key = keyFactory.buildKey(showtimeId, seatId);
         SeatLockValue value = seatLockRepository.getLock(key);
-        return value != null && ownerId.equals(value.ownerId());
+        return value != null && lockToken.equals(value.lockToken());
     }
 
     /**
      * After createBooking (success)
      */
-    public void releaseAfterBookingCreated(UUID ownerId, UUID showtimeId, List<UUID> seatIds) {
-        unlockSeats(ownerId, showtimeId, seatIds);
+    public void releaseAfterBookingCreated(UUID showtimeId, Map<UUID, String> seatTokens) {
+        unlockSeats(showtimeId, seatTokens);
     }
 
     // -----------------------------------------------------------
