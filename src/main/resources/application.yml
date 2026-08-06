@@ -48,6 +48,9 @@ springdoc:
   packages-to-scan: com.cinebook
 
 app:
+  seat-lock:
+    tll-seconds: 300
+
   redis:
     verify-token-ttl-minutes: 5
 

@@ -48,9 +48,13 @@ public enum ErrorCode {
     BOOKING_NOT_FOUND(HttpStatus.NOT_FOUND, "BOOK-005", "Booking not found"),
     BOOKING_ACCESS_DENIED(HttpStatus.FORBIDDEN, "BOOK-006", "You do not have permission to access this booking"),
     INVALID_BOOKING_TRANSITION(HttpStatus.BAD_REQUEST, "BOOK-007", "Invalid booking status transition"),
-    GUEST_INFO_REQUIRED(HttpStatus.BAD_REQUEST, "BOOK-008", "You need to provide email and phone number");
+    GUEST_INFO_REQUIRED(HttpStatus.BAD_REQUEST, "BOOK-008", "You need to provide email and phone number"),
 
-
+    // --- Lock Seat errors ---
+    SEAT_ALREADY_LOCKED(HttpStatus.CONFLICT, "LOCK-001", "This seat is currently held by another user"),
+    SEAT_LOCK_NOT_OWNED(HttpStatus.FORBIDDEN, "LOCK-002", "You do not own the lock for this seat, or the lock has expired"),
+    SEAT_LOCK_EXPIRED(HttpStatus.GONE, "LOCK-003", "The hold time for this seat has expired");
+    
     private final HttpStatus status;
     private final String code;
     private final String defaultMessage;

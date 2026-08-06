@@ -1,0 +1,13 @@
+package com.cinebook.module.seatlock.model;
+
+import java.time.Instant;
+import java.util.UUID;
+
+public record SeatLockValue(
+        UUID ownerId,
+        UUID seatId,
+        String bookingId,
+        Instant lockedAt,
+        Instant expiresAt
+) {
+}
