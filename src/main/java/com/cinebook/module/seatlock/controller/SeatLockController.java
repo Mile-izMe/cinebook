@@ -4,6 +4,7 @@ import com.cinebook.common.exception.CinebookException;
 import com.cinebook.common.exception.ErrorCode;
 import com.cinebook.common.response.ApiSuccessResponse;
 import com.cinebook.common.security.CustomerUserDetails;
+import com.cinebook.module.seatlock.dto.request.SeatExtendRequest;
 import com.cinebook.module.seatlock.dto.request.SeatLockRequest;
 import com.cinebook.module.seatlock.dto.request.SeatUnlockRequest;
 import com.cinebook.module.seatlock.dto.response.SeatLockResponse;
@@ -68,6 +69,16 @@ public class SeatLockController {
         return ResponseEntity.ok(ApiSuccessResponse.<Set<UUID>>builder()
                 .message("Get list hold seats success!")
                 .data(seatLockService.getLockedSeatIds(showtimeId))
+                .build());
+    }
+
+    @PatchMapping("/extend")
+    public ResponseEntity<ApiSuccessResponse<Void>> extendLockTime(
+            @Valid @RequestBody SeatExtendRequest request
+    ) {
+        seatLockService.extendLockTtl(request.showtimeId(), request.seatTokens());
+        return ResponseEntity.ok(ApiSuccessResponse.<Void>builder()
+                .message("Extend success")
                 .build());
     }
 }

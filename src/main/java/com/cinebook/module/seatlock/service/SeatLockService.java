@@ -110,9 +110,15 @@ public class SeatLockService {
     // -----------------------------------------------------------
     // Extend TTL (Client-side heartbeat)
     // -----------------------------------------------------------
-    public String extendLockTtl(UUID showtimeId, UUID seatId, String lockToken) {
-        String key = keyFactory.buildKey(showtimeId, seatId);
-        String result = seatLockRepository.extendLock(key, lockToken, properties.getTtlSeconds());
+    public String extendLockTtl(UUID showtimeId, Map<UUID, String> seatTokens) {
+        String result = "";
+
+        for (Map.Entry<UUID, String> entry : seatTokens.entrySet()) {
+            UUID seatId = entry.getKey();
+            String lockToken = entry.getValue();
+            String key = keyFactory.buildKey(showtimeId, seatId);
+            result = seatLockRepository.extendLock(key, lockToken, properties.getTtlSeconds());
+        }
 
         return switch (result) {
             case "EXPIRED" -> throw new CinebookException(ErrorCode.SEAT_LOCK_EXPIRED);
