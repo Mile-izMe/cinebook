@@ -8,6 +8,8 @@ import com.cinebook.module.seatlock.repository.SeatLockRepository;
 import com.cinebook.module.seatlock.repository.impl.factory.SeatLockKeyFactory;
 import com.cinebook.module.seatlock.websocket.SeatMapBroadcaster;
 import lombok.RequiredArgsConstructor;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -23,11 +25,12 @@ public class SeatLockService {
     private final SeatLockKeyFactory keyFactory;
     private final SeatLockProperties properties;
     private final SeatMapBroadcaster broadcaster;
+    private final RedissonClient redissonClient;
 
     // -----------------------------------------------------------
     // Lock Seat - Validate Seat + Redis Lock
     // -----------------------------------------------------------
-    public List<SeatLockValue> lockSeats(UUID ownerId, UUID showtimeId, List<UUID> seatIds) {
+    public List<SeatLockValue> lockSeats(String ownerId, UUID showtimeId, List<UUID> seatIds) {
         // Arrange lock order - prevent deadlock between 2 request lock many chairs
         // opposite order (e.g: request A lock [1,2], request B lock [2,1] at the same time)
         List<UUID> sorted = seatIds.stream().sorted().toList();
@@ -140,6 +143,10 @@ public class SeatLockService {
     // -----------------------------------------------------------
     public Set<UUID> getLockedSeatIds(UUID showtimeId) {
         return seatLockRepository.findLockedSeatIdsByShowtime(showtimeId);
+    }
+
+    public RLock getLock(String lockKey) {
+        return redissonClient.getLock(lockKey);
     }
 
 }

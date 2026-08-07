@@ -4,14 +4,15 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public record BookingCreateRequest(
         @NotNull(message = "Showtime must no be empty!")
         UUID showtimeId,
 
-        @NotEmpty(message = "Must select at least 1 seat!")
-        List<UUID> seatIds,
+        @NotEmpty(message = "Seat tokens must not be empty!")
+        Map<UUID, String> seatTokens,
 
         String guestEmail,
         String guestPhone

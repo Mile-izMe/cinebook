@@ -22,20 +22,26 @@ import com.cinebook.module.seat.entity.Seat;
 import com.cinebook.module.seat.entity.SeatType;
 import com.cinebook.module.seat.repository.SeatRepository;
 import com.cinebook.module.seat.service.SeatService;
+import com.cinebook.module.seatlock.service.SeatLockService;
 import com.cinebook.module.showtime.entity.Showtime;
 import com.cinebook.module.showtime.service.ShowtimeService;
 import com.cinebook.module.user.entity.User;
 import com.cinebook.module.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Time;
 import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -49,6 +55,7 @@ public class BookingService {
 
     private final UserService userService;
     private final ShowtimeService showtimeService;
+    private final SeatLockService seatLockService;
 
     private final BookingMapper bookingMapper;
     private final CursorCodec cursorCodec;
@@ -77,7 +84,10 @@ public class BookingService {
             bookingCode = generateBookingCode();
         }
 
+        if (bookingCode == null) bookingCode = generateBookingCode();
+
         Showtime showtime = showtimeService.findOrThrow(request.showtimeId());
+        List<UUID> seatIds = new ArrayList<>(request.seatTokens().keySet());
 
         // --- Validation ---
         LocalDateTime currentTime = LocalDateTime.now();
@@ -85,8 +95,8 @@ public class BookingService {
             throw new CinebookException(ErrorCode.SHOWTIME_ALREADY_STARTED);
         }
 
-        List<Seat> seats = seatRepository.findAllById(request.seatIds());
-        if (seats.size() != request.seatIds().size()) {
+        List<Seat> seats = seatRepository.findAllById(seatIds);
+        if (seats.size() != seatIds.size()) {
             throw new CinebookException(ErrorCode.SEAT_NOT_FOUND);
         }
         boolean allBelongToRoom = seats.stream()
@@ -95,65 +105,94 @@ public class BookingService {
             throw new CinebookException(ErrorCode.SEAT_NOT_IN_ROOM);
         }
 
-        // Naive double-booking check - race condition this does NOT close.
-        // Good enough for single-request testing;
-        // Phase 6 (Redis lock) is what makes this actually safe.
-        List<UUID> seatIds = seats.stream().map(Seat::getId).toList();
-        var alreadyBooked = bookingSeatRepository.findActiveByShowtimeAndSeats(showtime.getId(), seatIds);
-        if (!alreadyBooked.isEmpty()) {
+        // --- Verify Redis Lock Owner ---
+        for (UUID seatId : seatIds) {
+            String lockTokenForThisSeat = request.seatTokens().get(seatId);
+
+            boolean isOwnerOfSeat = seatLockService.isLockedByOwnerToken(
+                    showtime.getId(),
+                    seatId,
+                    lockTokenForThisSeat
+            );
+            if (!isOwnerOfSeat) {
+                throw new CinebookException(ErrorCode.SEAT_LOCK_NOT_OWNED,
+                        "You do not hold seat " + seatId + " or lock is expired"
+                );
+            }
+        }
+
+        //  Guard prevent double-submit in SAME 1 request/thread (User double-click)
+        String lockKey = "booking:create:" + showtime.getId() + ":" +
+                seatIds.stream().sorted().map(UUID::toString).collect(Collectors.joining(","));
+        RLock creationLock = seatLockService.getLock(lockKey);
+
+        boolean acquired;
+        try {
+            acquired = creationLock.tryLock(0, 10, TimeUnit.SECONDS); // waitTime=0 -> fail fast, leaseTime
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new CinebookException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
+        if (!acquired) {
             throw new CinebookException(ErrorCode.SEAT_ALREADY_BOOKED);
         }
 
-        // Price calculation (server-side only, never trust client)
-        boolean isWeekend = showtime.getStartTime().getDayOfWeek() == DayOfWeek.SATURDAY
-                || showtime.getStartTime().getDayOfWeek() == DayOfWeek.SUNDAY;
+        try {
+            // Price calculation (server-side only, never trust client)
+            boolean isWeekend = showtime.getStartTime().getDayOfWeek() == DayOfWeek.SATURDAY
+                    || showtime.getStartTime().getDayOfWeek() == DayOfWeek.SUNDAY;
 
-        int totalPrice = 0;
-        List<BookingSeatDraft> drafts = new ArrayList<>();
-        for (Seat seat : seats) {
-            int seatPrice = calculateSeatPrice(showtime.getBasePrice(), seat.getSeatType(), isWeekend);
-            totalPrice += seatPrice;
-            drafts.add(new BookingSeatDraft(seat, seatPrice));
+            int totalPrice = 0;
+            List<BookingSeatDraft> drafts = new ArrayList<>();
+            for (Seat seat : seats) {
+                int seatPrice = calculateSeatPrice(showtime.getBasePrice(), seat.getSeatType(), isWeekend);
+                totalPrice += seatPrice;
+                drafts.add(new BookingSeatDraft(seat, seatPrice));
+            }
+
+            // Snapshot, written once at creation time
+            BookingSnapshot snapshot = new BookingSnapshot(
+                    showtime.getMovie().getTitle(),
+                    showtime.getMovie().getPosterUrl(),
+                    showtime.getRoom().getCinema().getName(),
+                    showtime.getRoom().getCinema().getAddress(),
+                    showtime.getRoom().getName(),
+                    showtime.getStartTime().toString(),
+                    showtime.getFormat(),
+                    seats.stream().map(Seat::label).toList()
+            );
+
+            // Single transaction: Booking + all BookingSeat rows
+            // either all commit together or all roll back together (method-level @Transactional).
+            Booking booking = Booking.builder()
+                    .showtime(showtime)
+                    .user(user)
+                    .guestEmail(guestEmail)
+                    .guestPhone(guestPhone)
+                    .bookingCode(bookingCode)
+                    .snapshot(snapshot)
+                    .totalPrice(totalPrice)
+                    .status(BookingStatus.PENDING)
+                    .bookingTime(Instant.now())
+                    .build();
+            bookingRepository.save(booking);
+
+            for (BookingSeatDraft draft : drafts) {
+                bookingSeatRepository.save(BookingSeat.builder()
+                        .booking(booking)
+                        .seat(draft.seat())
+                        .showtimeId(showtime.getId())
+                        .seatLabel(draft.seat().label())
+                        .priceSnapshot(draft.price())
+                        .build());
+            }
+
+            seatLockService.releaseAfterBookingCreated(showtime.getId(), request.seatTokens());
+
+            return bookingMapper.toResponse(booking, seats.stream().map(Seat::label).toList());
+        } finally {
+            creationLock.unlock();
         }
-
-        // Snapshot, written once at creation time
-        BookingSnapshot snapshot = new BookingSnapshot(
-                showtime.getMovie().getTitle(),
-                showtime.getMovie().getPosterUrl(),
-                showtime.getRoom().getCinema().getName(),
-                showtime.getRoom().getCinema().getAddress(),
-                showtime.getRoom().getName(),
-                showtime.getStartTime().toString(),
-                showtime.getFormat(),
-                seats.stream().map(Seat::label).toList()
-        );
-
-        // Single transaction: Booking + all BookingSeat rows
-        // either all commit together or all roll back together (method-level @Transactional).
-        Booking booking = Booking.builder()
-                .showtime(showtime)
-                .user(user)
-                .guestEmail(guestEmail)
-                .guestPhone(guestPhone)
-                .bookingCode(bookingCode)
-                .snapshot(snapshot)
-                .totalPrice(totalPrice)
-                .status(BookingStatus.PENDING)
-                .bookingTime(Instant.now())
-                .build();
-        bookingRepository.save(booking);
-
-        for (BookingSeatDraft draft : drafts) {
-            bookingSeatRepository.save(BookingSeat.builder()
-                    .booking(booking)
-                    .seat(draft.seat())
-                    .showtimeId(showtime.getId())
-                    .seatLabel(draft.seat().label())
-                    .priceSnapshot(draft.price())
-                    .build());
-        }
-
-        return bookingMapper.toResponse(booking, seats.stream().map(Seat::label).toList());
     }
 
     private record BookingSeatDraft(

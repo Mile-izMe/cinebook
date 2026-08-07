@@ -1,5 +1,7 @@
 package com.cinebook.module.seatlock.controller;
 
+import com.cinebook.common.exception.CinebookException;
+import com.cinebook.common.exception.ErrorCode;
 import com.cinebook.common.response.ApiSuccessResponse;
 import com.cinebook.common.security.CustomerUserDetails;
 import com.cinebook.module.seatlock.dto.request.SeatLockRequest;
@@ -7,6 +9,8 @@ import com.cinebook.module.seatlock.dto.request.SeatUnlockRequest;
 import com.cinebook.module.seatlock.dto.response.SeatLockResponse;
 import com.cinebook.module.seatlock.model.SeatLockValue;
 import com.cinebook.module.seatlock.service.SeatLockService;
+import jakarta.annotation.Nullable;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -28,9 +32,18 @@ public class SeatLockController {
     @PostMapping
     public ResponseEntity<ApiSuccessResponse<List<SeatLockResponse>>> lockSeat(
             @Valid @RequestBody SeatLockRequest request,
-            @AuthenticationPrincipal CustomerUserDetails userDetails) {
+            @Nullable @AuthenticationPrincipal CustomerUserDetails userDetails,
+            HttpServletRequest httpRequest
+    ) {
 
-        UUID ownerId = userDetails.getUserId();
+        String ownerId = (userDetails != null)
+                ? userDetails.getUserId().toString()
+                : httpRequest.getHeader("X-Device-ID");
+
+        if (ownerId == null || ownerId.isBlank()) {
+            throw new CinebookException(ErrorCode.INTERNAL_SERVER_ERROR, "Missing authentication or X-Device-ID header");
+        }
+
         List<SeatLockValue> locked = seatLockService.lockSeats(ownerId, request.showtimeId(), request.seatIds());
 
         List<SeatLockResponse> response = locked.stream()

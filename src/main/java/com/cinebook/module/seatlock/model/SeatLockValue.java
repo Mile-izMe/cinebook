@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record SeatLockValue(
-        UUID ownerId,
+        String ownerId,
         UUID seatId,
         String lockToken,
         String bookingId,
