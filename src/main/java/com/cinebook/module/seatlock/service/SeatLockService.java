@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Service
@@ -35,13 +36,24 @@ public class SeatLockService {
         List<UUID> acquiredByThisCall = new ArrayList<>();
 
         long ttl = properties.getTtlSeconds();
+        long maxHoldMinutes = properties.getMaxHoldMinutes();
 
         try {
             for (UUID seatId : sorted) {
                 String key = keyFactory.buildKey(showtimeId, seatId);
                 Instant now = Instant.now();
                 String lockToken = UUID.randomUUID().toString();
-                SeatLockValue newValue = new SeatLockValue(ownerId, seatId, lockToken, null, now, now.plusSeconds(ttl));
+                Instant expiresAt = now.plusSeconds(ttl);
+                Instant maxExpiresAt = now.plus(maxHoldMinutes, ChronoUnit.MINUTES);
+                SeatLockValue newValue = new SeatLockValue(
+                        ownerId,
+                        seatId,
+                        lockToken,
+                        null,
+                        now,
+                        expiresAt,
+                        maxExpiresAt
+                );
 
                 boolean acquired = seatLockRepository.acquireLock(key, newValue, Duration.ofSeconds(ttl));
 
@@ -90,6 +102,21 @@ public class SeatLockService {
             // result == -1 <=> key exist but belong to another owner - skip,
             // No throw error to avoid 1 wrong seat -> Make batch fail unlock of user.
         }
+    }
+
+    // -----------------------------------------------------------
+    // Extend TTL (Client-side heartbeat)
+    // -----------------------------------------------------------
+    public String extendLockTtl(UUID showtimeId, UUID seatId, String lockToken) {
+        String key = keyFactory.buildKey(showtimeId, seatId);
+        String result = seatLockRepository.extendLock(key, lockToken, properties.getTtlSeconds());
+
+        return switch (result) {
+            case "EXPIRED" -> throw new CinebookException(ErrorCode.SEAT_LOCK_EXPIRED);
+            case "TOKEN_MISMATCH" -> throw new CinebookException(ErrorCode.SEAT_LOCK_NOT_OWNED);
+            case "MAX_HOLD_REACHED" -> throw new CinebookException(ErrorCode.SEAT_LOCK_MAX_HOLD_REACHED);
+            default -> result; // "EXTENDED:123"
+        };
     }
 
     // -----------------------------------------------------------

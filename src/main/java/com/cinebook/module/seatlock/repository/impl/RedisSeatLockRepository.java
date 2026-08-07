@@ -12,6 +12,7 @@ import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -67,6 +68,22 @@ public class RedisSeatLockRepository implements SeatLockRepository {
         }
 
         return lockedSeatIds;
+    }
+
+    @Override
+    public String extendLock(String key, String lockToken, long ttl) {
+        RedisScript<String> luaScript = provider.getExtendTtlScript();
+
+        String currentTime = String.valueOf(Instant.now().getEpochSecond());
+        String currentTtl = String.valueOf(ttl);
+
+        return redisTemplate.execute(
+                luaScript,
+                List.of(key),
+                lockToken,
+                currentTime,
+                currentTtl
+        );
     }
 
     private String writeJson(SeatLockValue value) {

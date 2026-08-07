@@ -50,7 +50,8 @@ springdoc:
 app:
   seat-lock:
     ttl-seconds: 300
-
+    max-hold-minutes: 15
+  
   redis:
     verify-token-ttl-minutes: 5
 

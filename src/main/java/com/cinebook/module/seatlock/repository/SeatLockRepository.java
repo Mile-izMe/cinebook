@@ -17,4 +17,6 @@ public interface SeatLockRepository {
     Long safeUnLock(String key, String lockToken);
 
     Set<UUID> findLockedSeatIdsByShowtime(UUID showtimeId);
+
+    String extendLock(String key, String lockToken, long ttl);
 }

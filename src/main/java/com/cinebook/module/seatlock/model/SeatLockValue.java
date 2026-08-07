@@ -9,6 +9,7 @@ public record SeatLockValue(
         String lockToken,
         String bookingId,
         Instant lockedAt,
-        Instant expiresAt
+        Instant expiresAt,
+        Instant maxExpiresAt
 ) {
 }

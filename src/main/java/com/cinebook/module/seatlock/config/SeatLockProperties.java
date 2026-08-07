@@ -13,5 +13,8 @@ public class SeatLockProperties {
     @Value("${app.seat-lock.ttl-seconds}")
     private long ttlSeconds;
 
+    @Value("${app.seat-lock.max-hold-minutes}")
+    private long maxHoldMinutes;
+
     private String keyPrefix = "lock:seat:";
 }
