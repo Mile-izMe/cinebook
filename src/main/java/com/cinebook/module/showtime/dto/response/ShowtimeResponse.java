@@ -9,6 +9,7 @@ public record ShowtimeResponse(
         UUID movieId,
         String movieTitle,
         Integer movieDuration,
+        String moviePosterUrl,
         UUID roomId,
         String roomName,
         UUID cinemaId,

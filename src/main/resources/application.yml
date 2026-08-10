@@ -49,7 +49,7 @@ springdoc:
 
 app:
   seat-lock:
-    ttl-seconds: 300
+    ttl-seconds: 120
     max-hold-minutes: 15
   
   redis:

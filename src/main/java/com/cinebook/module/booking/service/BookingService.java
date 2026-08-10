@@ -61,8 +61,6 @@ public class BookingService {
     private final CursorCodec cursorCodec;
     private final BookingStatusManager bookingStatusManager;
 
-    // ================ REDIS ===============
-
     // -----------------------------------------------------------
     // Create Booking
     // -----------------------------------------------------------

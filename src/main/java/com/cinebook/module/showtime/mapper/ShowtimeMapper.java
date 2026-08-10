@@ -12,6 +12,7 @@ public interface ShowtimeMapper {
     @Mapping(source = "movie.id", target = "movieId")
     @Mapping(source = "movie.title", target = "movieTitle")
     @Mapping(source = "movie.duration", target = "movieDuration")
+    @Mapping(source = "movie.posterUrl", target = "moviePosterUrl")
     @Mapping(source = "room.id", target = "roomId")
     @Mapping(source = "room.name", target = "roomName")
     @Mapping(source = "room.cinema.id", target = "cinemaId")

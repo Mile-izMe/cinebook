@@ -92,8 +92,10 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/webjars/**"
                         ).permitAll()
+                        .requestMatchers("/ws/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/verify-email",
                                 "/api/auth/login", "/api/auth/refresh", "/api/bookings", "/api/bookings/guest/*").permitAll()
+                        .requestMatchers("/api/seat-locks", "/api/seat-locks/**").permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/movies",
                                 "/api/movies/**",
