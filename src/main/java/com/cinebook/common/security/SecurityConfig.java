@@ -94,8 +94,10 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/verify-email",
-                                "/api/auth/login", "/api/auth/refresh", "/api/bookings", "/api/bookings/guest/*").permitAll()
-                        .requestMatchers("/api/seat-locks", "/api/seat-locks/**").permitAll()
+                                "/api/auth/login", "/api/auth/refresh", "/api/bookings", "/api/bookings/guest/*",
+                                "/api/payments/callback").permitAll()
+                        .requestMatchers("/api/seat-locks", "/api/seat-locks/**", "/api/bookings/*/payments",
+                                "/api/payments/*/mock-success", "/api/payments/*/mock-failed").permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/movies",
                                 "/api/movies/**",

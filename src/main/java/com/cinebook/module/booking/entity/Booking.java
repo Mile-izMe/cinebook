@@ -55,6 +55,9 @@ public class Booking extends Auditable {
     @Column(name = "booking_time", nullable = false)
     private Instant bookingTime;
 
+    @Column(name = "expires_at", nullable = false)
+    private Instant expiresAt;
+
     public void changeStatus(BookingStatus newStatus) {
         this.status = newStatus;
     }

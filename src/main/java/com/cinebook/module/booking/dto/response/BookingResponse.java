@@ -19,6 +19,7 @@ public record BookingResponse(
         List<String> seats,
         Integer totalPrice,
         BookingStatus status,
-        Instant bookingTime
+        Instant bookingTime,
+        Instant expiresAt
 ) {
 }

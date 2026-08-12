@@ -172,6 +172,7 @@ public class BookingService {
                     .totalPrice(totalPrice)
                     .status(BookingStatus.PENDING)
                     .bookingTime(Instant.now())
+//                    .expiresAt(Instant.now().plusSeconds(paymentTimeoutMinutes * 60L))
                     .build();
             bookingRepository.save(booking);
 
@@ -184,7 +185,7 @@ public class BookingService {
                         .priceSnapshot(draft.price())
                         .build());
             }
-            
+
             return bookingMapper.toResponse(booking, seats.stream().map(Seat::label).toList());
         } finally {
             creationLock.unlock();
