@@ -137,13 +137,6 @@ public class SeatLockService {
         return value != null && lockToken.equals(value.lockToken());
     }
 
-    /**
-     * After createBooking (success)
-     */
-    public void releaseAfterBookingCreated(UUID showtimeId, Map<UUID, String> seatTokens) {
-        unlockSeats(showtimeId, seatTokens);
-    }
-
     // -----------------------------------------------------------
     // Get locked seats (FE realtime refresh seat map)
     // -----------------------------------------------------------
@@ -155,4 +148,14 @@ public class SeatLockService {
         return redissonClient.getLock(lockKey);
     }
 
+    // -----------------------------------------------------------
+    // Force Unlock (After Payment Success)
+    // -----------------------------------------------------------
+    public void forceUnlockSeats(UUID showtimeId, List<UUID> seatIds) {
+        for (UUID seatId : seatIds) {
+            String key = keyFactory.buildKey(showtimeId, seatId);
+            seatLockRepository.deleteLock(key);
+            broadcaster.broadcastSeatReleased(showtimeId, seatId);
+        }
+    }
 }

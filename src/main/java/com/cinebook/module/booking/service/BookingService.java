@@ -184,9 +184,7 @@ public class BookingService {
                         .priceSnapshot(draft.price())
                         .build());
             }
-
-            seatLockService.releaseAfterBookingCreated(showtime.getId(), request.seatTokens());
-
+            
             return bookingMapper.toResponse(booking, seats.stream().map(Seat::label).toList());
         } finally {
             creationLock.unlock();
@@ -314,7 +312,7 @@ public class BookingService {
         return price;
     }
 
-    private Booking findOrThrow(UUID id) {
+    public Booking findOrThrow(UUID id) {
         return bookingRepository.findById(id)
                 .orElseThrow(() -> new CinebookException(ErrorCode.BOOKING_NOT_FOUND));
     }

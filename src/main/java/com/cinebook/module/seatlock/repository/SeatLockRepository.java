@@ -3,6 +3,7 @@ package com.cinebook.module.seatlock.repository;
 import com.cinebook.module.seatlock.model.SeatLockValue;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 

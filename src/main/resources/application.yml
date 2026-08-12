@@ -48,6 +48,11 @@ springdoc:
   packages-to-scan: com.cinebook
 
 app:
+  payment:
+    mock:
+      secret: "MOCK_GATEWAY_SECRET_123"
+    timeout-minutes: 15
+
   seat-lock:
     ttl-seconds: 120
     max-hold-minutes: 15

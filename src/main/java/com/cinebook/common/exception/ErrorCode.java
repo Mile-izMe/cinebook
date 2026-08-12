@@ -54,7 +54,16 @@ public enum ErrorCode {
     SEAT_ALREADY_LOCKED(HttpStatus.CONFLICT, "LOCK-001", "This seat is currently held by another user"),
     SEAT_LOCK_NOT_OWNED(HttpStatus.FORBIDDEN, "LOCK-002", "You do not own the lock for this seat, or the lock has expired"),
     SEAT_LOCK_EXPIRED(HttpStatus.GONE, "LOCK-003", "The hold time for this seat has expired"),
-    SEAT_LOCK_MAX_HOLD_REACHED(HttpStatus.CONFLICT, "LOCK-004", "Maximum time holding seat reached");
+    SEAT_LOCK_MAX_HOLD_REACHED(HttpStatus.CONFLICT, "LOCK-004", "Maximum time holding seat reached"),
+
+    // --- Payment errors ---
+    PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PAY-001", "Payment not found"),
+    PAYMENT_ALREADY_SUCCESS(HttpStatus.CONFLICT, "PAY-002", "This booking has already been paid successfully"),
+    PAYMENT_NOT_ALLOWED(HttpStatus.CONFLICT, "PAY-003", "Cannot create payment for a booking in this status"),
+    INVALID_PAYMENT_SIGNATURE(HttpStatus.FORBIDDEN, "PAY-004", "Invalid callback signature"),
+    PAYMENT_AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, "PAY-005", "Callback amount does not match the booking amount"),
+    INVALID_PAYMENT_TRANSITION(HttpStatus.BAD_REQUEST, "PAY-006", "Invalid payment state transition"),
+    BOOKING_ALREADY_EXPIRED(HttpStatus.CONFLICT, "PAY-007", "Booking has expired, payment cannot be processed");
 
     private final HttpStatus status;
     private final String code;
