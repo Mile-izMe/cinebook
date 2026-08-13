@@ -6,10 +6,12 @@ import com.cinebook.common.util.CursorPageResponse;
 import com.cinebook.module.booking.dto.request.BookingCreateRequest;
 import com.cinebook.module.booking.dto.response.BookingResponse;
 import com.cinebook.module.booking.dto.response.BookingSummaryResponse;
+import com.cinebook.module.booking.dto.response.TicketResponse;
 import com.cinebook.module.booking.service.BookingService;
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.simpleframework.xml.Path;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -38,6 +40,24 @@ public class BookingController {
                 .build());
     }
 
+    @GetMapping("/{id}/status")
+    public String getBookingStatus(
+            @PathVariable UUID id
+    ) {
+        return bookingService.getBookingStatus(id);
+    }
+
+    @GetMapping("/{id}/ticket")
+    public ResponseEntity<ApiSuccessResponse<TicketResponse>> getTicketInformation(
+            @PathVariable UUID id
+    ) {
+        TicketResponse ticket = bookingService.getTicketInfo(id);
+
+        return ResponseEntity.ok(ApiSuccessResponse.<TicketResponse>builder()
+                .message("Get ticket successful")
+                .data(ticket)
+                .build());
+    }
 
     // ---- Booking histories with cursor pagination ----
     @GetMapping("/me")

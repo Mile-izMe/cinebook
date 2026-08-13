@@ -7,6 +7,7 @@ import com.cinebook.common.util.CursorPageResponse;
 import com.cinebook.module.booking.dto.request.BookingCreateRequest;
 import com.cinebook.module.booking.dto.response.BookingResponse;
 import com.cinebook.module.booking.dto.response.BookingSummaryResponse;
+import com.cinebook.module.booking.dto.response.TicketResponse;
 import com.cinebook.module.booking.entity.Booking;
 import com.cinebook.module.booking.entity.BookingSeat;
 import com.cinebook.module.booking.entity.BookingSnapshot;
@@ -17,6 +18,9 @@ import com.cinebook.module.booking.repository.BookingRepository;
 import com.cinebook.module.booking.repository.BookingSeatRepository;
 import com.cinebook.module.booking.validator.BookingStatusManager;
 import com.cinebook.module.lock.base.RedisLockBase;
+import com.cinebook.module.payment.entity.Payment;
+import com.cinebook.module.payment.entity.PaymentStatus;
+import com.cinebook.module.payment.repository.PaymentRepository;
 import com.cinebook.module.room.service.RoomService;
 import com.cinebook.module.seat.entity.Seat;
 import com.cinebook.module.seat.entity.SeatType;
@@ -52,6 +56,7 @@ public class BookingService {
     private final BookingSeatRepository bookingSeatRepository;
     private final BookingQueryRepository bookingQueryRepository;
     private final SeatRepository seatRepository;
+    private final PaymentRepository paymentRepository;
 
     private final UserService userService;
     private final ShowtimeService showtimeService;
@@ -296,6 +301,35 @@ public class BookingService {
 
         cancel(booking);
     }
+
+    // -----------------------------------------------------------
+    // Check valid booking (GUEST)
+    // -----------------------------------------------------------
+    public String getBookingStatus(UUID bookingId) {
+        Booking booking = findOrThrow(bookingId);
+        return booking.getStatus().toString();
+    }
+
+    // -----------------------------------------------------------
+    // Get ticket information
+    // -----------------------------------------------------------
+    @Transactional(readOnly = true)
+    public TicketResponse getTicketInfo(UUID bookingId) {
+        Booking booking = findOrThrow(bookingId);
+
+        if (booking.getStatus() != BookingStatus.PAID) {
+            throw new CinebookException(ErrorCode.BOOKING_ACCESS_DENIED, "Ticket is only available for paid bookings");
+        }
+
+        String paymentMethod = paymentRepository.findAllByBookingIdOrderByCreatedAtDesc(bookingId).stream()
+                .filter(p -> p.getStatus() == PaymentStatus.SUCCESS)
+                .map(Payment::getPaymentMethod)
+                .findFirst()
+                .orElse("UNKNOWN");
+
+        return bookingMapper.toTicketResponse(booking, paymentMethod);
+    }
+
 
     // -----------------------------------------------------------
     // Helpers

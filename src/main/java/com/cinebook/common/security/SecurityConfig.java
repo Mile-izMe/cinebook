@@ -107,7 +107,9 @@ public class SecurityConfig {
                                 "/api/cinemas/**",
                                 "/api/showtimes",
                                 "/api/showtimes/**",
-                                "/api/bookings/guest/*"
+                                "/api/bookings/guest/*",
+                                "/api/bookings/*/status",
+                                "/api/bookings/*/ticket"
                         ).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/cities", "/api/cinemas",
                                 "/api/cinemas/*/rooms", "/api/rooms/*/seats/generate-seats",
