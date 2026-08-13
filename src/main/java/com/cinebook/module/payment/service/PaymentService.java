@@ -51,8 +51,21 @@ public class PaymentService {
     public PaymentResponse createPayment(UUID userId, UUID bookingId, CreatePaymentRequest request) {
         Booking booking = bookingService.findOrThrow(bookingId);
 
-        if (!booking.getUser().getId().equals(userId)) {
-            throw new CinebookException(ErrorCode.BOOKING_ACCESS_DENIED);
+        if (booking.getUser() != null) {
+            // Order belong to authenticated User
+            if (!booking.getUser().getId().equals(userId)) {
+                throw new CinebookException(ErrorCode.BOOKING_ACCESS_DENIED, "You do not own this booking");
+            }
+        } else {
+            // Order belong to Guest
+            boolean isValidGuest = request.guestEmail() != null
+                    && request.guestPhone() != null
+                    && request.guestEmail().equalsIgnoreCase(booking.getGuestEmail())
+                    && request.guestPhone().equals(booking.getGuestPhone());
+
+            if (!isValidGuest) {
+                throw new CinebookException(ErrorCode.BOOKING_ACCESS_DENIED, "Invalid guest credentials for this booking");
+            }
         }
 
         if (booking.getStatus() == BookingStatus.EXPIRED) {
@@ -115,8 +128,7 @@ public class PaymentService {
         // Verify amount from gateway match with Booking, NOT TRUST gateway
         Booking booking = payment.getBooking();
         if (request.amount() != booking.getTotalPrice()) {
-            payment.setStatus(PaymentStatus.FAILED);
-            paymentRepository.save(payment);
+            paymentStatusManager.changeStatus(payment, PaymentStatus.FAILED);
             throw new CinebookException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
         }
 
@@ -154,6 +166,7 @@ public class PaymentService {
     // -----------------------------------------------------------
     // MOCK SUCCESS / MOCK FAILED BUTTON for FE
     // -----------------------------------------------------------
+    @Transactional
     public void mockTrigger(UUID paymentId, boolean success) {
         Payment payment = findOrThrow(paymentId);
 

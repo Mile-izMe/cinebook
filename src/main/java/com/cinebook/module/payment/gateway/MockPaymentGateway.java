@@ -27,7 +27,7 @@ public class MockPaymentGateway implements PaymentGateway {
     @Override
     public PaymentResult createPayment(UUID paymentId, int amount, String bookingCode) {
         String providerTransactionId = "MOCK-" + UUID.randomUUID();
-        String paymentUrl = "/mock-payment?paymentId=" + paymentId;
+        String paymentUrl = "http://localhost:3000/mock-payment?paymentId=" + paymentId + "&amount=" + amount;
         return new PaymentResult(paymentUrl, providerTransactionId);
     }
 

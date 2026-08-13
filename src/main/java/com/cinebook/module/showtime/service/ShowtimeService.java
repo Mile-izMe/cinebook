@@ -2,6 +2,7 @@ package com.cinebook.module.showtime.service;
 
 import com.cinebook.common.exception.CinebookException;
 import com.cinebook.common.exception.ErrorCode;
+import com.cinebook.module.booking.repository.BookingSeatRepository;
 import com.cinebook.module.cinema.entity.Cinema;
 import com.cinebook.module.cinema.service.CinemaService;
 import com.cinebook.module.movie.entity.Movie;
@@ -21,10 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,6 +31,8 @@ public class ShowtimeService {
 
     private final ShowtimeRepository showtimeRepository;
     private final SeatRepository seatRepository;
+    private final BookingSeatRepository bookingSeatRepository;
+
     private final MovieService movieService;
     private final RoomService roomService;
     private final CinemaService cinemaService;
@@ -89,6 +89,8 @@ public class ShowtimeService {
 
         List<Seat> seats = seatRepository.findAllByRoomIdOrderByRowAscNumberAsc(roomId);
 
+        Set<UUID> soldSeatIds = bookingSeatRepository.findSoldSeatIdsByShowtimeId(showtimeId);
+
         // Group by row, keep A -> B -> C...
         Map<String, List<Seat>> grouped = seats.stream()
                 .collect(Collectors.groupingBy(Seat::getRow, java.util.LinkedHashMap::new, Collectors.toList()));
@@ -98,16 +100,16 @@ public class ShowtimeService {
                         entry.getKey(),
                         entry.getValue().stream()
                                 .sorted(Comparator.comparing(Seat::getNumber))
-                                .map(seat -> new SeatMapResponse.SeatMapSeat(
-                                        seat.getId(),
-                                        seat.label(),
-                                        seat.getSeatType().name(),
-                                        calculatePrice(showtime.getBasePrice(), seat.getSeatType()),
-                                        // Phase 4: fake AVAILABLE for all seats.
-                                        // Phase 6 (Redis Lock) will change real status
-                                        // from showtime_seat/Redis.
-                                        "AVAILABLE"
-                                ))
+                                .map(seat -> {
+                                    String status = soldSeatIds.contains(seat.getId()) ? "SOLD" : "AVAILABLE";
+                                    return new SeatMapResponse.SeatMapSeat(
+                                            seat.getId(),
+                                            seat.label(),
+                                            seat.getSeatType().name(),
+                                            calculatePrice(showtime.getBasePrice(), seat.getSeatType()),
+                                            status
+                                    );
+                                })
                                 .toList()
                 ))
                 .toList();

@@ -6,10 +6,12 @@ import com.cinebook.module.payment.dto.request.CreatePaymentRequest;
 import com.cinebook.module.payment.dto.request.MockCallbackRequest;
 import com.cinebook.module.payment.dto.response.PaymentResponse;
 import com.cinebook.module.payment.service.PaymentService;
+import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,13 +25,13 @@ public class PaymentController {
 
     private final PaymentService paymentService;
 
-    @PostMapping("/api/bookings/{bookingId}/payments")
+    @PostMapping("/api/bookings/{bookingId}/payment")
     public ResponseEntity<ApiSuccessResponse<PaymentResponse>> create(
             @PathVariable UUID bookingId,
-            CustomerUserDetails customerUserDetails,
+            @Nullable @AuthenticationPrincipal CustomerUserDetails userDetails,
             @Valid @RequestBody CreatePaymentRequest request
     ) {
-        UUID userId = customerUserDetails.getUserId();
+        UUID userId = (userDetails != null) ? userDetails.getUserId() : null;
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiSuccessResponse.<PaymentResponse>builder()
                 .message("Create payment success")
                 .data(paymentService.createPayment(userId, bookingId, request))

@@ -5,7 +5,9 @@ import jakarta.validation.constraints.NotBlank;
 public record CreatePaymentRequest(
 
         @NotBlank(message = "Payment method must not be empty!")
-        String paymentMethod
+        String paymentMethod,
 
+        String guestEmail,
+        String guestPhone
 ) {
 }

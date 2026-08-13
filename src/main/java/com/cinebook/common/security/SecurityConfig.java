@@ -96,7 +96,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/verify-email",
                                 "/api/auth/login", "/api/auth/refresh", "/api/bookings", "/api/bookings/guest/*",
                                 "/api/payments/callback").permitAll()
-                        .requestMatchers("/api/seat-locks", "/api/seat-locks/**", "/api/bookings/*/payments",
+                        .requestMatchers("/api/seat-locks", "/api/seat-locks/**", "/api/bookings/*/payment",
                                 "/api/payments/*/mock-success", "/api/payments/*/mock-failed").permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/movies",
