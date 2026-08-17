@@ -92,7 +92,7 @@ public class PaymentService {
                 .build();
         payment = paymentRepository.save(payment);
 
-        var gatewayResult = paymentGateway.createPayment(payment.getId(), amount, booking.getBookingCode());
+        var gatewayResult = paymentGateway.createPayment(payment.getId(), amount, booking.getId());
         payment.setProvider("MOCK");
         payment.setProviderTransactionId(gatewayResult.providerTransactionId());
         paymentRepository.save(payment);

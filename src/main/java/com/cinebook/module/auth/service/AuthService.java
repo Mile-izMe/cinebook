@@ -4,7 +4,6 @@ import com.cinebook.common.exception.CinebookException;
 import com.cinebook.common.exception.ErrorCode;
 import com.cinebook.common.security.JwtProvider;
 import com.cinebook.module.auth.dto.request.LoginRequest;
-import com.cinebook.module.auth.dto.request.LogoutRequest;
 import com.cinebook.module.auth.dto.request.RefreshRequest;
 import com.cinebook.module.auth.dto.request.RegisterRequest;
 import com.cinebook.module.auth.dto.response.AuthResponse;

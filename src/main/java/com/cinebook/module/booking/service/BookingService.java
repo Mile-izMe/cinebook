@@ -157,6 +157,7 @@ public class BookingService {
             BookingSnapshot snapshot = new BookingSnapshot(
                     showtime.getMovie().getTitle(),
                     showtime.getMovie().getPosterUrl(),
+                    showtime.getMovie().getBackdropUrl(),
                     showtime.getRoom().getCinema().getName(),
                     showtime.getRoom().getCinema().getAddress(),
                     showtime.getRoom().getName(),

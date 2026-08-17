@@ -6,6 +6,7 @@ import java.util.List;
 public record TicketResponse(
         String bookingCode,
         String movieTitle,
+        String backdropUrl,
         String format,
         Integer duration,
 

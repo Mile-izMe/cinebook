@@ -5,6 +5,7 @@ import java.util.List;
 public record BookingSnapshot(
         String movieName,
         String posterUrl,
+        String backdropUrl,
         String cinemaName,
         String cinemaAddress,
         String roomName,

@@ -30,6 +30,7 @@ public interface BookingMapper {
     @Mapping(target = "totalPrice", source = "booking.totalPrice")
     @Mapping(target = "paymentMethod", source = "paymentMethod")
     @Mapping(target = "movieTitle", source = "booking.snapshot.movieName")
+    @Mapping(target = "backdropUrl", source = "booking.snapshot.backdropUrl")
     @Mapping(target = "format", source = "booking.snapshot.format")
     @Mapping(target = "cinemaName", source = "booking.snapshot.cinemaName")
     @Mapping(target = "cinemaAddress", source = "booking.snapshot.cinemaAddress")

@@ -7,7 +7,7 @@ import java.util.UUID;
 
 public interface PaymentGateway {
 
-    PaymentResult createPayment(UUID paymentId, int amount, String bookingCode);
+    PaymentResult createPayment(UUID paymentId, int amount, UUID bookingId);
 
     boolean verifySignature(CallbackPayload payload);
 
