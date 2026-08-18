@@ -1,5 +1,7 @@
 package com.cinebook.module.storage.service;
 
+import com.cinebook.module.storage.dto.PresignUrlRequest;
+import com.cinebook.module.storage.type.UploadType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -19,11 +21,20 @@ public class MinioBuildService {
     /**
      * Temp upload path - not yet tied to any movieId (movie doesn't exist yet at presign time).
      */
-    public String buildImageObjectKey(String imageType, String originalFileName) {
-        String extension = extractExtension(originalFileName);
-        return "uploads/%s/%s%s".formatted(imageType, UUID.randomUUID(), extension);
-        // imageType="poster" -> uploads/posters/uuid.jpg
-        // imageType="backdrop" -> uploads/backdrops/uuid.jpg
+    public String buildObjectKey(UploadType type, String originalFilename, UUID userId) {
+        String extension = extractExtension(originalFilename);
+
+        return switch (type) {
+            case AVATAR -> {
+                if (userId == null) throw new IllegalArgumentException("UserId is required for AVATAR");
+                yield "avatars/%s/avatar%s".formatted(userId.toString(), extension);
+            }
+            case MOVIE_POSTER -> "uploads/posters/%s%s".formatted(UUID.randomUUID(), extension);
+
+            case MOVIE_BACKDROP -> "uploads/backdrops/%s%s".formatted(UUID.randomUUID(), extension);
+
+            default -> throw new IllegalArgumentException("Upload type is not supported!");
+        };
     }
 
     public String buildPublicUrl(String objectKey) {

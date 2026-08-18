@@ -221,8 +221,11 @@ public class BookingService {
                     .map(BookingSeat::getSeatLabel).toList();
             return new BookingSummaryResponse(
                     b.getId(),
+                    b.getBookingCode(),
                     b.getSnapshot() != null ? b.getSnapshot().movieName() : b.getShowtime().getMovie().getTitle(),
                     b.getSnapshot() != null ? b.getSnapshot().posterUrl() : b.getShowtime().getMovie().getPosterUrl(),
+                    b.getSnapshot() != null ? b.getSnapshot().cinemaName() : b.getShowtime().getRoom().getCinema().getName(),
+                    b.getSnapshot() != null ? b.getSnapshot().roomName() : b.getShowtime().getRoom().getName(),
                     labels,
                     b.getShowtime().getStartTime().atZone(ZoneId.systemDefault()).toInstant(),
                     b.getTotalPrice(),

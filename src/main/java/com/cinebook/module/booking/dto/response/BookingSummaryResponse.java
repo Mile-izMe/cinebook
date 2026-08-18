@@ -9,8 +9,11 @@ import java.util.UUID;
 
 public record BookingSummaryResponse(
         UUID bookingId,
+        String bookingCode,
         String movieName,
         String posterUrl,
+        String cinemaName,
+        String roomName,
         List<String> seats,
         Instant showtimeStart,
         Integer totalPrice,

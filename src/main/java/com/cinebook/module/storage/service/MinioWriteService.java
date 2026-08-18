@@ -2,7 +2,7 @@ package com.cinebook.module.storage.service;
 
 import com.cinebook.common.exception.CinebookException;
 import com.cinebook.common.exception.ErrorCode;
-import com.cinebook.module.storage.dto.PresignedUploadResult;
+import com.cinebook.module.storage.dto.PresignUrlResponse;
 import io.minio.*;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -46,7 +46,7 @@ public class MinioWriteService {
      * size range, exact key) are embedded in the signature itself, so the
      * browser cannot upload something outside these bounds even if it tries.
      */
-    public PresignedUploadResult createPresignedImageUpload(String objectKey, String contentType) {
+    public PresignUrlResponse createPresignedImageUpload(String objectKey, String contentType) {
         if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType)) {
             throw new CinebookException(ErrorCode.INVALID_FILE_TYPE);
         }
@@ -59,7 +59,7 @@ public class MinioWriteService {
 
             var formData = minioClient.getPresignedPostFormData(policy);
 
-            return new PresignedUploadResult(
+            return new PresignUrlResponse(
                     minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder()
                                     .method(Http.Method.PUT).bucket(bucket).object(objectKey).build())
                             .replaceAll("\\?.*$", ""), // base endpoint URL for the POST form action
