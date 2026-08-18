@@ -13,15 +13,16 @@ import com.cinebook.module.auth.entity.RefreshToken;
 import com.cinebook.module.auth.event.UserRegisteredEvent;
 import com.cinebook.module.auth.messaging.MailEventPublisher;
 import com.cinebook.module.auth.repository.RefreshTokenRepository;
+import com.cinebook.module.storage.service.MinioBuildService;
 import com.cinebook.module.user.entity.Role;
 import com.cinebook.module.user.entity.User;
 import com.cinebook.module.user.repository.RoleRepository;
 import com.cinebook.module.user.repository.UserRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -33,12 +34,16 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final VerifyTokenService verifyTokenService;
-    private final MailEventPublisher mailEventPublisher;
-    private final JwtProvider jwtProvider;
-    private final TokenHasher tokenHasher;
     private final RefreshTokenRepository refreshTokenRepository;
+
+    private final PasswordEncoder passwordEncoder;
+    private final TokenHasher tokenHasher;
+    private final JwtProvider jwtProvider;
+
+    private final MailEventPublisher mailEventPublisher;
+    private final MinioBuildService minioBuildService;
+
+    private final VerifyTokenService verifyTokenService;
 
     @Value("${app.jwt.refresh-token-ttl-days}")
     private long refreshTokenTtlDays;
@@ -170,10 +175,15 @@ public class AuthService {
     // ---------------------------------------------------------------
     // Get User Profile
     // ---------------------------------------------------------------
-    @Transactional
+    @Transactional(readOnly = true)
     public UserResponse getUserProfile(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CinebookException(ErrorCode.USER_NOT_FOUND));
+
+        String fullAvatarUrl = null;
+        if (user.getAvatarUrl() != null && !user.getAvatarUrl().isBlank()) {
+            fullAvatarUrl = minioBuildService.buildPublicUrl(user.getAvatarUrl());
+        }
 
         return UserResponse.builder()
                 .id(user.getId())
@@ -182,7 +192,7 @@ public class AuthService {
                 .userName(user.getUserName())
                 .phone(user.getPhone())
                 .roleCode(user.getRole().getRoleCode())
-                .avatarUrl(user.getAvatarUrl())
+                .avatarUrl(fullAvatarUrl)
                 .build();
     }
 
