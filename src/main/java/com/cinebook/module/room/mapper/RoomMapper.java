@@ -9,5 +9,6 @@ import org.mapstruct.Mapping;
 public interface RoomMapper {
 
     @Mapping(source = "cinema.id", target = "cinemaId")
+    @Mapping(source = "cinema.name", target = "cinemaName")
     RoomResponse toResponse(Room room);
 }

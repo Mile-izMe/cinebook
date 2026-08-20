@@ -7,6 +7,7 @@ import java.util.UUID;
 
 public record RoomResponse(
         UUID id, String name, Integer capacity,
-        RoomType roomType, RoomStatus status, UUID cinemaId
+        RoomType roomType, RoomStatus status, UUID cinemaId,
+        String cinemaName
 ) {
 }

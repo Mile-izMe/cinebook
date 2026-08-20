@@ -9,5 +9,6 @@ import org.mapstruct.Mapping;
 public interface CinemaMapper {
 
     @Mapping(source = "city.id", target = "cityId")
+    @Mapping(source = "city.cityName", target = "cityName")
     CinemaResponse toResponse(Cinema cinema);
 }
