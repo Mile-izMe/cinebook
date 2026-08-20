@@ -7,7 +7,6 @@ import com.cinebook.module.user.dto.request.UpdateUserRequest;
 import com.cinebook.module.user.dto.response.UserStatsResponse;
 import com.cinebook.module.user.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -27,10 +26,11 @@ public class UserController {
     ) {
         UUID userId = userDetails.getUserId();
         UserStatsResponse stats = userService.getMyStats(userId);
-        return ResponseEntity.status(HttpStatus.FOUND).body(ApiSuccessResponse.<UserStatsResponse>builder()
+        return ResponseEntity.ok(ApiSuccessResponse.<UserStatsResponse>builder()
                 .message("Get user stats success!")
                 .data(stats)
-                .build());
+                .build()
+        );
     }
 
     @PutMapping("/profile")

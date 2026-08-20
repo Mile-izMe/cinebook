@@ -116,7 +116,7 @@ public class SecurityConfig {
                                 "/api/showtimes").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/bookings/*").authenticated()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/api/auth/logout", "/api/auth/me").authenticated() // needs the JWT to know which user/device
+                        .requestMatchers("/api/auth/logout", "/api/auth/me", "/api/users/stats").authenticated() // needs the JWT to know which user/device
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/bookings/**").authenticated()
                         .anyRequest().authenticated()

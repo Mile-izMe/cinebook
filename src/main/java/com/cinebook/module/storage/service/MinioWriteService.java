@@ -36,6 +36,28 @@ public class MinioWriteService {
                 minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucket).build());
                 log.info("Created MinIO bucket: {}", bucket);
             }
+
+            String policyJson = """
+                    {
+                      "Version": "2012-10-17",
+                      "Statement": [
+                        {
+                          "Effect": "Allow",
+                          "Principal": "*",
+                          "Action": ["s3:GetObject"],
+                          "Resource": ["arn:aws:s3:::%s/*"]
+                        }
+                      ]
+                    }
+                    """.formatted(bucket);
+
+            minioClient.setBucketPolicy(
+                    SetBucketPolicyArgs.builder()
+                            .bucket(bucket)
+                            .config(policyJson)
+                            .build()
+            );
+            log.info("Verified/Set public read policy for bucket: {}", bucket);
         } catch (Exception e) {
             log.warn("Could not verify/create MinIO bucket '{}': {}", bucket, e.getMessage());
         }
