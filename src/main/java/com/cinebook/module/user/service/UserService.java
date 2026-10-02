@@ -24,6 +24,8 @@ public class UserService {
     private final UserRepository userRepository;
     private final BookingRepository bookingRepository;
     private final UserMapper userMapper;
+    private final com.cinebook.module.storage.service.MinioGetService minioGetService;
+    private final com.cinebook.module.storage.service.MinioBuildService minioBuildService;
 
     public User findOrThrow(UUID userId) {
         return userRepository.findById(userId)
@@ -56,7 +58,14 @@ public class UserService {
 
         // If FE send objectKey of new avatar => Overwrite
         if (request.avatarUrl() != null && !request.avatarUrl().isBlank()) {
-            user.setAvatarUrl(request.avatarUrl());
+            String key = request.avatarUrl();
+            if (!key.equals(user.getAvatarUrl())) {
+                if (!key.startsWith("avatars/" + userId + "/") && !key.startsWith("cloudinary/avatars/" + userId + "/")) {
+                    throw new CinebookException(ErrorCode.VALIDATION_ERROR, "Avatar must belong to the current user");
+                }
+                minioGetService.requireObjectExists(key);
+                user.setAvatarUrl(key);
+            }
         }
 
         if (request.userName() != null && !request.userName().isBlank()) {

@@ -29,7 +29,8 @@ public class MovieScoreConsumer {
     private final ReviewRepository reviewRepository;
     private final MovieRepository movieRepository;
 
-    @RabbitListener(queues = "${rabbitmq.review.queue}")
+    // Acknowledge only after the listener and its transaction complete successfully.
+    @RabbitListener(queues = "${rabbitmq.review.queue}", ackMode = "AUTO")
     @Transactional
     public void onMovieReviewed(MovieReviewedEvent event) {
         BigDecimal rawAvg = reviewRepository.averageRatingByMovieId(event.movieId());

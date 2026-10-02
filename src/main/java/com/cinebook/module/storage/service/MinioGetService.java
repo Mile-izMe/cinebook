@@ -17,7 +17,8 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class MinioGetService {
 
-    private final MinioClient minioClient;
+    private final org.springframework.beans.factory.ObjectProvider<MinioClient> minioClient;
+    private final org.springframework.beans.factory.ObjectProvider<CloudinaryStorageService> cloudinary;
 
     @Value("${minio.bucket}")
     private String bucket;
@@ -27,8 +28,9 @@ public class MinioGetService {
      * objectKey they send back in POST /movies - never take their word for it.
      */
     public boolean objectExists(String objectKey) {
+        if (CloudinaryStorageService.isCloudinaryKey(objectKey)) return cloudinary.getObject().objectExists(objectKey);
         try {
-            minioClient.statObject(StatObjectArgs.builder().bucket(bucket).object(objectKey).build());
+            minioClient.getObject().statObject(StatObjectArgs.builder().bucket(bucket).object(objectKey).build());
             return true;
         } catch (ErrorResponseException e) {
             if ("NoSuchKey".equals(e.errorResponse().code())) return false;
@@ -48,8 +50,9 @@ public class MinioGetService {
      * Only needed if the bucket is private - if public, MinioBuildService.buildPublicUrl() is enough.
      */
     public String generatePresignedGetUrl(String objectKey, int expiryMinutes) {
+        if (CloudinaryStorageService.isCloudinaryKey(objectKey)) return cloudinary.getObject().buildPublicUrl(objectKey);
         try {
-            return minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder()
+            return minioClient.getObject().getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder()
                     .method(Http.Method.GET)
                     .bucket(bucket)
                     .object(objectKey)

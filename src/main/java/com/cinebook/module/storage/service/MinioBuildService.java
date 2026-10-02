@@ -13,7 +13,9 @@ import java.util.UUID;
  * unit-tested without a running MinIO instance.
  */
 @Service
+@lombok.RequiredArgsConstructor
 public class MinioBuildService {
+    private final org.springframework.beans.factory.ObjectProvider<CloudinaryStorageService> cloudinary;
 
     @Value("${minio.public-base-url}")
     private String publicBaseUrl;
@@ -22,6 +24,9 @@ public class MinioBuildService {
      * Temp upload path - not yet tied to any movieId (movie doesn't exist yet at presign time).
      */
     public String buildObjectKey(UploadType type, String originalFilename, UUID userId) {
+        if (cloudinary.getIfAvailable() != null) {
+            return cloudinary.getObject().buildObjectKey(type, userId);
+        }
         String extension = extractExtension(originalFilename);
 
         return switch (type) {
@@ -37,7 +42,11 @@ public class MinioBuildService {
         };
     }
 
+    @org.mapstruct.Named("storagePublicUrl")
     public String buildPublicUrl(String objectKey) {
+        if (objectKey == null || objectKey.isBlank()) return null;
+        if (objectKey.startsWith("https://") || objectKey.startsWith("http://")) return objectKey;
+        if (CloudinaryStorageService.isCloudinaryKey(objectKey)) return cloudinary.getObject().buildPublicUrl(objectKey);
         return publicBaseUrl + "/" + objectKey;
     }
 

@@ -48,6 +48,8 @@ springdoc:
   packages-to-scan: com.cinebook
 
 app:
+  storage:
+    provider: ${STORAGE_PROVIDER:minio}
   payment:
     mock:
       secret: "MOCK_GATEWAY_SECRET_123"
@@ -93,3 +95,8 @@ minio:
   access-key: cinebook
   secret-key: cinebook123
   public-base-url: http://localhost:9000/cinebook
+# Keep MinIO for local use; choose cloudinary on Railway.
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:}
+  api-key: ${CLOUDINARY_API_KEY:}
+  api-secret: ${CLOUDINARY_API_SECRET:}

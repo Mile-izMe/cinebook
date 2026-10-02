@@ -23,17 +23,19 @@ public class MinioWriteService {
     private static final long MAX_FILE_SIZE_BYTES = 5L * 1024 * 1024; // 5MB
     private static final int PRESIGN_TTL_MINUTES = 10;
 
-    private final MinioClient minioClient;
+    private final org.springframework.beans.factory.ObjectProvider<MinioClient> minioClient;
+    private final org.springframework.beans.factory.ObjectProvider<CloudinaryStorageService> cloudinary;
 
     @Value("${minio.bucket}")
     private String bucket;
 
     @PostConstruct
     public void ensureBucketExists() {
+        if (cloudinary.getIfAvailable() != null) return;
         try {
-            boolean exists = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucket).build());
+            boolean exists = minioClient.getObject().bucketExists(BucketExistsArgs.builder().bucket(bucket).build());
             if (!exists) {
-                minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucket).build());
+                minioClient.getObject().makeBucket(MakeBucketArgs.builder().bucket(bucket).build());
                 log.info("Created MinIO bucket: {}", bucket);
             }
 
@@ -51,7 +53,7 @@ public class MinioWriteService {
                     }
                     """.formatted(bucket);
 
-            minioClient.setBucketPolicy(
+            minioClient.getObject().setBucketPolicy(
                     SetBucketPolicyArgs.builder()
                             .bucket(bucket)
                             .config(policyJson)
@@ -69,6 +71,7 @@ public class MinioWriteService {
      * browser cannot upload something outside these bounds even if it tries.
      */
     public PresignUrlResponse createPresignedImageUpload(String objectKey, String contentType) {
+        if (cloudinary.getIfAvailable() != null) return cloudinary.getObject().createUpload(objectKey, contentType);
         if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType)) {
             throw new CinebookException(ErrorCode.INVALID_FILE_TYPE);
         }
@@ -79,10 +82,10 @@ public class MinioWriteService {
             policy.addEqualsCondition("Content-Type", contentType);
             policy.addContentLengthRangeCondition(1, MAX_FILE_SIZE_BYTES);
 
-            var formData = minioClient.getPresignedPostFormData(policy);
+            var formData = minioClient.getObject().getPresignedPostFormData(policy);
 
             return new PresignUrlResponse(
-                    minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder()
+                    minioClient.getObject().getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder()
                                     .method(Http.Method.PUT).bucket(bucket).object(objectKey).build())
                             .replaceAll("\\?.*$", ""), // base endpoint URL for the POST form action
                     formData,
@@ -97,8 +100,13 @@ public class MinioWriteService {
 
     public void deleteObject(String objectKey) {
         if (objectKey == null || objectKey.isBlank()) return;
+        if (CloudinaryStorageService.isCloudinaryKey(objectKey)) {
+            cloudinary.getObject().deleteObject(objectKey);
+            return;
+        }
+        if (minioClient.getIfAvailable() == null) return; // Retain legacy MinIO assets when switching provider.
         try {
-            minioClient.removeObject(RemoveObjectArgs.builder().bucket(bucket).object(objectKey).build());
+            minioClient.getObject().removeObject(RemoveObjectArgs.builder().bucket(bucket).object(objectKey).build());
         } catch (Exception e) {
             // Don't fail the whole request just because cleanup of an old poster failed -
             // log it and move on; a stray object in MinIO is a minor cost, not a correctness issue.

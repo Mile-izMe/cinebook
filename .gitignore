@@ -34,3 +34,5 @@ build/
 .vscode/
 application-dev.yml
 application-prod.yml
+# Production configuration contains environment references only.
+!src/main/resources/application-prod.yml

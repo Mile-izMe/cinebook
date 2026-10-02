@@ -11,40 +11,41 @@ import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 
 @Configuration
 public class RedisConfig {
-    @Value("${spring.data.redis.host}")
-    private String redisHost;
+    @Value("${spring.data.redis.host}") private String redisHost;
+    @Value("${spring.data.redis.port}") private int redisPort;
+    @Value("${spring.data.redis.password:}") private String redisPassword;
+    @Value("${spring.data.redis.username:}") private String redisUsername;
+    @Value("${spring.data.redis.ssl.enabled:false}") private boolean redisSsl;
 
-    @Value("${spring.data.redis.port}")
-    private int redisPort;
-
-    @Value("${spring.data.redis.password}")
-    private String redisPassword;
-
-    @Bean
-    public RedissonClient redissonClient() {
+    // Package-visible for a configuration test without opening a network connection.
+    Config clientConfig() {
         Config config = new Config();
-        String address = String.format("redis://%s:%d", redisHost, redisPort);
-
-        config.useSingleServer()
-                .setAddress(address)
-                .setPassword(redisPassword);
-
-        return Redisson.create(config);
+        config.setThreads(2).setNettyThreads(2);
+        var server = config.useSingleServer()
+                .setAddress((redisSsl ? "rediss://" : "redis://") + redisHost + ":" + redisPort)
+                .setConnectionMinimumIdleSize(1)
+                .setConnectionPoolSize(4)
+                .setSubscriptionConnectionMinimumIdleSize(1)
+                .setSubscriptionConnectionPoolSize(2)
+                .setPingConnectionInterval(60_000);
+        if (!redisPassword.isBlank()) server.setPassword(redisPassword);
+        if (!redisUsername.isBlank()) server.setUsername(redisUsername);
+        return config;
     }
 
-    /**
-     * Redis never fires the "expired" keyspace event and our listener below would never trigger.
-     * "Ex" = expired events + generic events. Set at startup via CONFIG SET
-     * so no manual redis.conf edit is needed for local/dev.
-     */
-    @Bean
-    public RedisMessageListenerContainer redisMessageListenerContainer(
-            RedisConnectionFactory connectionFactory) {
-        connectionFactory.getConnection().setConfig("notify-keyspace-events", "Ex");
+    @Bean(destroyMethod = "shutdown")
+    public RedissonClient redissonClient() {
+        return Redisson.create(clientConfig());
+    }
 
+    @Bean
+    public RedisMessageListenerContainer redisMessageListenerContainer(RedisConnectionFactory connectionFactory) {
+        // Ex enables keyevent notifications for expiry; required for realtime seat release.
+        try (var connection = connectionFactory.getConnection()) {
+            connection.setConfig("notify-keyspace-events", "Ex");
+        }
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
         return container;
     }
-
 }
